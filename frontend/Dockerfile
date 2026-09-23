@@ -11,7 +11,7 @@
 # унёс бы в статику содержимое content/*.ts вместо базы и врал бы молча.
 # Compose поднимает контейнер после того, как портал ответил healthcheck'у.
 
-FROM node:24-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 
 # Слой зависимостей отдельно от исходников: правка страницы не должна
@@ -19,7 +19,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:24-alpine AS runtime
+FROM node:25-alpine AS runtime
 WORKDIR /app
 
 # curl для healthcheck'а в compose.
