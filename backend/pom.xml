@@ -53,12 +53,12 @@
 		     Spring Boot springdoc не входит. -->
 		<springdoc.version>3.1.1</springdoc.version>
 		<!-- Клиент объектного хранилища. В BOM Spring Boot не входит. -->
-		<awssdk.version>2.54.16</awssdk.version>
+		<awssdk.version>2.55.10</awssdk.version>
 		<!-- SMTP-сервер в процессе теста. Нужен, чтобы проверить отправку
 		     настоящим протоколом, а не подменённым портом MailSender:
 		     кодировка темы, обратный адрес и авторизация ломаются именно
 		     на протоколе. В BOM Spring Boot не входит. -->
-		<greenmail.version>2.1.13</greenmail.version>
+		<greenmail.version>2.1.14</greenmail.version>
 		<jacoco.version>0.8.15</jacoco.version>
 	</properties>
 
