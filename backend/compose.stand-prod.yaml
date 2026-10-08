@@ -53,7 +53,7 @@ services:
       VEDAL_SPEECHKIT_API_KEY: ${VEDAL_SPEECHKIT_API_KEY:-}
       VEDAL_CONVERSATION_DIGEST_ENABLED: ${VEDAL_CONVERSATION_DIGEST_ENABLED:-true}
       # Ведалина: engine — отвечает ли модель (deterministic | model; старое
-      # yandexgpt = model), VEDAL_LLM_PROVIDER — чья модель: yandex | gigachat.
+      # yandexgpt = model), VEDAL_LLM_PROVIDER — чья модель: yandex | gigachat | cloudru.
       VEDAL_ASSISTANT_ENGINE: ${VEDAL_ASSISTANT_ENGINE:-deterministic}
       VEDAL_LLM_PROVIDER: ${VEDAL_LLM_PROVIDER:-yandex}
       VEDAL_LLM_FALLBACK: ${VEDAL_LLM_FALLBACK:-${VEDAL_YANDEXGPT_FALLBACK:-true}}
@@ -75,6 +75,13 @@ services:
       GIGACHAT_EMBEDDINGS_DIMENSION: ${GIGACHAT_EMBEDDINGS_DIMENSION:-1024}
       GIGACHAT_CA_BUNDLE: ${GIGACHAT_CA_BUNDLE:-}
 
+      # Провайдер cloudru (Cloud.ru Foundation Models): docs/operations/cloudru_models_activation.md.
+      CLOUDRU_API_KEY: ${CLOUDRU_API_KEY:-}
+      CLOUDRU_BASE_URL: ${CLOUDRU_BASE_URL:-https://foundation-models.api.cloud.ru/v1}
+      CLOUDRU_MODEL: ${CLOUDRU_MODEL:-GigaChat/GigaChat-2-Max}
+      CLOUDRU_EMBEDDINGS_MODEL: ${CLOUDRU_EMBEDDINGS_MODEL:-ai-sage/Giga-Embeddings-instruct-480M}
+      CLOUDRU_EMBEDDINGS_DIMENSION: ${CLOUDRU_EMBEDDINGS_DIMENSION:-0}
+
       # Поиск по близости (RAG, pgvector). Выключен, пока у VEDAL нет корпуса
       # документов (issue #38): индексировать нечего, и каждый вопрос стоил бы
       # вызова эмбеддингов ради заведомо пустой выдачи.
@@ -83,7 +90,7 @@ services:
       # включать его можно и до корпуса: пустой индекс ничего не находит,
       # и отвечает прежний поиск. Ключ — тот же, что у генерации выбранного
       # провайдера; у Яндекса моделей две (документная и вопросная), у Сбера
-      # одна. Провайдер индекса свой: смена означает миграцию колонки
+      # и Cloud.ru одна. Провайдер индекса свой: смена означает миграцию колонки
       # и переиндексацию, поэтому по умолчанию он наследует VEDAL_LLM_PROVIDER,
       # но его можно оставить на Яндексе отдельно.
       VEDAL_RAG_ENABLED: ${VEDAL_RAG_ENABLED:-false}

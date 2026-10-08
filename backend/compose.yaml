@@ -561,9 +561,10 @@ services:
       #
       # engine: deterministic — поиск по опубликованному (умолчание, ключей
       # не нужно), model — модель поверх того же поиска. Провайдер модели —
-      # VEDAL_LLM_PROVIDER: yandex (YandexGPT) или gigachat (Сбер); ключи
-      # у каждого свои, и нужны только ключи выбранного. Порядок включения —
-      # docs/operations/yandexgpt_activation.md и gigachat_activation.md.
+      # VEDAL_LLM_PROVIDER: yandex (YandexGPT), gigachat (Сбер) или cloudru
+      # (Cloud.ru Foundation Models); ключи у каждого свои, и нужны только
+      # ключи выбранного. Порядок включения — docs/operations/yandexgpt_activation.md,
+      # gigachat_activation.md и cloudru_models_activation.md.
       VEDAL_ASSISTANT_ENGINE: ${VEDAL_ASSISTANT_ENGINE:-deterministic}
       VEDAL_LLM_PROVIDER: ${VEDAL_LLM_PROVIDER:-yandex}
       VEDAL_LLM_FALLBACK: ${VEDAL_LLM_FALLBACK:-true}
@@ -588,10 +589,22 @@ services:
       GIGACHAT_EMBEDDINGS_DIMENSION: ${GIGACHAT_EMBEDDINGS_DIMENSION:-1024}
       GIGACHAT_CA_BUNDLE: ${GIGACHAT_CA_BUNDLE:-}
 
+      # Провайдер cloudru. Статический API-ключ из консоли Cloud.ru
+      # (Evolution Foundation Models → API-ключи), OpenAI-совместимая дверь,
+      # без OAuth и без корня Минцифры. Модели — идентификаторы с семейством,
+      # как их отдаёт /models. Размерность эмбеддингов пустая — узнаётся
+      # по первому ответу модели.
+      CLOUDRU_API_KEY: ${CLOUDRU_API_KEY:-}
+      CLOUDRU_BASE_URL: ${CLOUDRU_BASE_URL:-https://foundation-models.api.cloud.ru/v1}
+      CLOUDRU_MODEL: ${CLOUDRU_MODEL:-GigaChat/GigaChat-2-Max}
+      CLOUDRU_EMBEDDINGS_MODEL: ${CLOUDRU_EMBEDDINGS_MODEL:-ai-sage/Giga-Embeddings-instruct-480M}
+      CLOUDRU_EMBEDDINGS_DIMENSION: ${CLOUDRU_EMBEDDINGS_DIMENSION:-0}
+
       # Поиск по близости (RAG, pgvector). Провайдер эмбеддингов свой:
       # по умолчанию тот же, что у генерации, но индекс можно оставить
-      # на Яндексе, переведя генерацию на Сбер, — размерности у них разные,
-      # и смена провайдера индекса означает миграцию и переиндексацию.
+      # на Яндексе, переведя генерацию на Сбер или Cloud.ru, — размерности
+      # у них разные, и смена провайдера индекса означает миграцию
+      # и переиндексацию.
       VEDAL_RAG_ENABLED: ${VEDAL_RAG_ENABLED:-false}
       VEDAL_RAG_PROVIDER: ${VEDAL_RAG_PROVIDER:-${VEDAL_LLM_PROVIDER:-yandex}}
       VEDAL_RAG_DOCUMENT_MODEL_URI: ${VEDAL_RAG_DOCUMENT_MODEL_URI:-}
