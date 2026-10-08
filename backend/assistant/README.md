@@ -62,9 +62,12 @@
 Чья модель — `vedal.assistant.provider` (`VEDAL_LLM_PROVIDER`): `yandex` —
 `YandexGptHttp` (по умолчанию), `gigachat` — `GigaChatHttp` (Сбер: OAuth-токен
 на 30 минут в `GigaChatAuth`, SSE-поток, корень Минцифры через
-`TrustedCertificates`). Оба стоят за портом `ChatModel`, и `ModelEngine`
-не знает, с кем говорит. Порядок включения — `docs/operations/yandexgpt_activation.md`
-и `docs/operations/gigachat_activation.md`.
+`TrustedCertificates`), `cloudru` — `CloudRuHttp` (Cloud.ru Evolution
+Foundation Models: те же модели GigaChat за OpenAI-совместимой дверью,
+статический ключ, без OAuth и сертификата; тело запроса и разбор SSE общие
+с Сбером — `OpenAiChat`). Все три стоят за портом `ChatModel`, и `ModelEngine`
+не знает, с кем говорит. Порядок включения — `docs/operations/yandexgpt_activation.md`,
+`docs/operations/gigachat_activation.md` и `docs/operations/cloudru_models_activation.md`.
 
 **Модель не заменяет поиск, а надстраивается над ним.** Материалы находит
 портал: у него есть каталог, новости и документы с учётом прав, а у модели
@@ -86,7 +89,8 @@
 
 **Ключа в репозитории нет.** `VEDAL_YANDEXGPT_API_KEY` и
 `VEDAL_YANDEXGPT_MODEL_URI` (адрес модели целиком, `gpt://каталог/модель`) —
-или `GIGACHAT_AUTH_KEY` для Сбера — приходят окружением, и с `engine=model`
+или `GIGACHAT_AUTH_KEY` для Сбера, `CLOUDRU_API_KEY` для Cloud.ru — приходят
+окружением, и с `engine=model`
 портал без ключа выбранного провайдера не поднимется —
 это намеренно: иначе он молча отвечал бы перечнем ссылок, и заметить подмену
 можно было бы только по тому, что ответы стали суше.
@@ -125,10 +129,11 @@
 - схема `knowledge_source` / `knowledge_chunk` и расширение `vector`
   (миграция `V34`), образ базы — `pgvector/pgvector:pg16`;
 - нарезка материала на фрагменты с перекрытием (`Chunks`);
-- порт эмбеддингов `Embeddings` и его реализации `YandexEmbeddings`
-  и `GigaChatEmbeddings` (провайдер — `VEDAL_RAG_PROVIDER`; размерности
-  разные, и `KnowledgeStore` сверяет модель с колонкой на старте) —
-  пара моделей `text-search-doc` и `text-search-query`, вектор из 256 чисел;
+- порт эмбеддингов `Embeddings` и его реализации `YandexEmbeddings`,
+  `GigaChatEmbeddings` и `CloudRuEmbeddings` (провайдер — `VEDAL_RAG_PROVIDER`;
+  размерности разные, и `KnowledgeStore` сверяет модель с колонкой на старте;
+  у Cloud.ru размерность узнаётся по первому ответу модели) —
+  у Яндекса пара моделей `text-search-doc` и `text-search-query`, вектор из 256 чисел;
 - индексация с отпечатком: неизменившийся материал не стоит ни одного вызова
   модели (`KnowledgeIndex`);
 - поиск по близости с порогом и областями `PUBLIC` / `STAFF` (`VectorSearch`);

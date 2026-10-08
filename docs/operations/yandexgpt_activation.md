@@ -7,8 +7,10 @@
 `VEDAL_ASSISTANT_ENGINE=model` с провайдером `VEDAL_LLM_PROVIDER=yandex`
 (умолчание; старое значение `VEDAL_ASSISTANT_ENGINE=yandexgpt` принимается
 по-прежнему) включает YandexGPT как слой формулировки ответа поверх локального
-безопасного поиска. Второй провайдер — GigaChat Сбера, переключается той же
-переменной: [gigachat_activation.md](gigachat_activation.md). Сначала `DeterministicSearch` выбирает
+безопасного поиска. Второй провайдер — GigaChat Сбера, третий — Cloud.ru
+Foundation Models; переключаются той же переменной:
+[gigachat_activation.md](gigachat_activation.md),
+[cloudru_models_activation.md](cloudru_models_activation.md). Сначала `DeterministicSearch` выбирает
 только разрешённые источники для текущего контура, потом модель получает уже
 подготовленный `APPROVED_CONTEXT`.
 

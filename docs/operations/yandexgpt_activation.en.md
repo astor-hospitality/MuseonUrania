@@ -7,8 +7,10 @@
 `VEDAL_ASSISTANT_ENGINE=model` with the provider `VEDAL_LLM_PROVIDER=yandex`
 (the default; the old `VEDAL_ASSISTANT_ENGINE=yandexgpt` is still accepted)
 turns YandexGPT into a wording layer on top of the local safe search. The
-second provider is Sber's GigaChat, switched by the same variable:
-[gigachat_activation.en.md](gigachat_activation.en.md). `DeterministicSearch` picks only the sources allowed for
+second provider is Sber's GigaChat, the third is Cloud.ru Foundation Models;
+both are switched by the same variable:
+[gigachat_activation.en.md](gigachat_activation.en.md),
+[cloudru_models_activation.en.md](cloudru_models_activation.en.md). `DeterministicSearch` picks only the sources allowed for
 the current contour first; the model then receives an already prepared
 `APPROVED_CONTEXT`.
 

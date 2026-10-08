@@ -66,9 +66,14 @@ Two implementations stand behind the `LlmEngine` port, selected by the
 Whose model — `vedal.assistant.provider` (`VEDAL_LLM_PROVIDER`): `yandex` —
 `YandexGptHttp` (default), `gigachat` — `GigaChatHttp` (Sber: a 30-minute
 OAuth token in `GigaChatAuth`, SSE stream, the Ministry root via
-`TrustedCertificates`). Both sit behind the `ChatModel` port, and `ModelEngine`
-does not know whom it talks to. Activation — `docs/operations/yandexgpt_activation.en.md`
-and `docs/operations/gigachat_activation.en.md`.
+`TrustedCertificates`), `cloudru` — `CloudRuHttp` (Cloud.ru Evolution
+Foundation Models: the same GigaChat models behind an OpenAI-compatible
+endpoint, a static key, no OAuth and no certificate; the request body and SSE
+parsing are shared with Sber — `OpenAiChat`). All three sit behind the
+`ChatModel` port, and `ModelEngine` does not know whom it talks to.
+Activation — `docs/operations/yandexgpt_activation.en.md`,
+`docs/operations/gigachat_activation.en.md` and
+`docs/operations/cloudru_models_activation.en.md`.
 
 **The model does not replace the search, it sits on top of it.** The portal
 finds the materials: it has the catalogue, the news and the documents with
@@ -90,7 +95,8 @@ visitor wait for a human because of someone else's downtime is pointless.
 
 **No key lives in the repository.** `VEDAL_YANDEXGPT_API_KEY` and
 `VEDAL_YANDEXGPT_MODEL_URI` (the full model address, `gpt://folder/model`) —
-or `GIGACHAT_AUTH_KEY` for Sber — come from the environment, and with `engine=model`
+or `GIGACHAT_AUTH_KEY` for Sber, `CLOUDRU_API_KEY` for Cloud.ru — come from
+the environment, and with `engine=model`
 the portal will not start without them — deliberately: otherwise it would
 quietly answer with a list of links, and the substitution would only be
 noticeable by the answers becoming drier.
@@ -130,8 +136,12 @@ becomes meaningful work once there is a corpus to measure it on.
 - the `knowledge_source` / `knowledge_chunk` schema and the `vector` extension
   (migration `V34`); the database image is `pgvector/pgvector:pg16`;
 - chunking with overlap (`Chunks`);
-- the `Embeddings` port and its `YandexEmbeddings` implementation — the
-  `text-search-doc` / `text-search-query` pair, a vector of 256 numbers;
+- the `Embeddings` port and its implementations `YandexEmbeddings`,
+  `GigaChatEmbeddings` and `CloudRuEmbeddings` (provider — `VEDAL_RAG_PROVIDER`;
+  dimensions differ, and `KnowledgeStore` checks the model against the column
+  at startup; with Cloud.ru the dimension is learned from the model's first
+  answer) — Yandex uses the `text-search-doc` / `text-search-query` pair,
+  a vector of 256 numbers;
 - indexing with a checksum: unchanged material costs not a single model call
   (`KnowledgeIndex`);
 - similarity search with a threshold and the `PUBLIC` / `STAFF` scopes

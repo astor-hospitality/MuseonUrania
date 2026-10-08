@@ -33,7 +33,7 @@ VEDAL Portal combines the public website with a protected staff workspace:
 | Data | PostgreSQL 16, transactional outbox, Kafka 3.9 in KRaft mode |
 | Files | S3-compatible object storage through AWS SDK |
 | Auth | Keycloak, OAuth2/OIDC, PKCE, protected-contour roles |
-| AI | YandexGPT or GigaChat (switched by configuration), RAG pipeline, pgvector in the target architecture |
+| AI | YandexGPT, GigaChat or Cloud.ru Foundation Models (switched by configuration), RAG pipeline, pgvector in the target architecture |
 | Infrastructure | Docker Compose, Caddy/reverse proxy, systemd autodeploy, Yandex Cloud VM |
 
 ## Quick Start
