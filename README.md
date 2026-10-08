@@ -7,6 +7,22 @@
 счета, коммерческие условия, ключи облака, SMTP, S3 и YandexGPT не хранятся в
 git и передаются заказчику отдельным официальным пакетом.
 
+## Подготовка к релизу — 06.10.2026
+
+VEDAL — самостоятельный портал заказчика, не часть деплоя Astor.
+Не передавать его Keycloak, БД, S3 или Docker-права в контур Astor.
+Этот чек-лист не подтверждает текущее состояние production.
+
+- [ ] Точный commit прошёл [CI](https://github.com/astor-hospitality/MuseonUrania/actions): backend/gateway, frontend и образы.
+- [ ] `cd backend && ./mvnw verify` и `cd backend/api-gateway && ./mvnw verify` (Java 25, Docker для Testcontainers).
+- [ ] Во `frontend/`: `npm ci`, `npx next typegen`, `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build` (Node.js 24, как в CI).
+- [ ] Flyway-миграции, свежий бэкап, восстановление и совместимость отката проверены.
+- [ ] На стенде проверены сайт, OIDC/права, формы, уведомления и S3; при замене документов — также outbox и индекс ассистента.
+- [ ] Release assets не содержат клиентских файлов, данных людей и секретов; официальный пакет передачи хранится отдельно.
+
+[Релиз](https://github.com/astor-hospitality/MuseonUrania/releases) фиксирует
+исходники; production-деплой и приёмка фиксируются отдельно.
+
 ## Что внутри
 
 VEDAL Portal объединяет публичный сайт и закрытую рабочую зону:

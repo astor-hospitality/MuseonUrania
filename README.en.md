@@ -8,6 +8,15 @@ acts, invoices, commercial terms, cloud keys, SMTP, S3 and YandexGPT secrets are
 not stored in git and are handed over to the customer in a separate official
 package.
 
+## Release preparation — 6 October 2026
+
+VEDAL releases independently from Astor. Do not share its database, Keycloak,
+object-store credentials or host privileges with Astor. A release identifies
+source code, not deployment or acceptance. See the [Russian README](README.md)
+for exact-commit CI, Java 25/Node 24 checks, migrations, tested backups,
+OIDC permissions, S3/outbox/index verification and secret-free assets.
+This documentation update does not certify production health.
+
 ## What Is Inside
 
 VEDAL Portal combines the public website with a protected staff workspace:
