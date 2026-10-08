@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import ServiceNotice from "@/components/ServiceNotice";
 import Footer from "@/components/Footer";
 import VedalinaWidget from "@/components/VedalinaWidget";
 import CookieNotice from "@/components/CookieNotice";
@@ -40,6 +41,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         <Motion />
         <div className="frame">
           <Header />
+          <ServiceNotice />
           {children}
         </div>
         <Footer />
