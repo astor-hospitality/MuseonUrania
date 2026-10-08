@@ -69,6 +69,12 @@ Foundation Models: те же модели GigaChat за OpenAI-совмести�
 не знает, с кем говорит. Порядок включения — `docs/operations/yandexgpt_activation.md`,
 `docs/operations/gigachat_activation.md` и `docs/operations/cloudru_models_activation.md`.
 
+Чей голос читает ответы в `/voice/synthesize` — `vedal.assistant.tts.provider`
+(`VEDAL_TTS_PROVIDER`): `yandex` — `SpeechKitTextToSpeech` (по умолчанию),
+`salute` — `SaluteSpeechTextToSpeech` (Сбер, тот же `GigaChatAuth` с отдельным
+ключом). Обе за портом `TextToSpeech`; наружу всегда `audio/wav`. Распознавание
+остаётся в `SpeechKit`. Порядок включения — `docs/operations/salutespeech_activation.md`.
+
 **Модель не заменяет поиск, а надстраивается над ним.** Материалы находит
 портал: у него есть каталог, новости и документы с учётом прав, а у модели
 нет ничего, кроме того, что мы ей покажем. Не нашлось материалов — модель

@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.*;
 class SpeechKitTest {
     @Test void consentAndAudioLimitsAreCheckedBeforeProvider() throws Exception {
         var speech = new SpeechKit("");
-        var controller = new VoiceController(new SpeechKitSpeechToText(speech), speech);
+        var controller = new VoiceController(new SpeechKitSpeechToText(speech), new SpeechKitTextToSpeech(speech));
         var request = new MockHttpServletRequest();
         request.setContent(new byte[32000]);
         assertThatThrownBy(() -> controller.recognize(request)).isInstanceOf(ResponseStatusException.class)

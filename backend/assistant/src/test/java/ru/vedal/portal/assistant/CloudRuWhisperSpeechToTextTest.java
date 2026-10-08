@@ -210,7 +210,7 @@ class CloudRuWhisperSpeechToTextTest {
     @Test
     void theControllerRecognizesThroughWhisperAndKeepsSynthesisOnSpeechKit() throws Exception {
         answering(200, "{\"text\":\"Проверка\"}");
-        var controller = new VoiceController(client(), new SpeechKit(""));
+        var controller = new VoiceController(client(), new SpeechKitTextToSpeech(new SpeechKit("")));
         var request = new org.springframework.mock.web.MockHttpServletRequest();
         request.addHeader("X-Voice-Consent", "true");
         request.setContent(new byte[3200]);

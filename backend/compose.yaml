@@ -589,6 +589,18 @@ services:
       GIGACHAT_EMBEDDINGS_DIMENSION: ${GIGACHAT_EMBEDDINGS_DIMENSION:-1024}
       GIGACHAT_CA_BUNDLE: ${GIGACHAT_CA_BUNDLE:-}
 
+      # Озвучивание ответов: VEDAL_TTS_PROVIDER — yandex (SpeechKit, как было)
+      # или salute (SaluteSpeech Сбера). Ключ SaluteSpeech — отдельный проект
+      # в кабинете Сбера, не ключ GigaChat; корень Минцифры — тот же файл
+      # (SALUTE_CA_BUNDLE наследует GIGACHAT_CA_BUNDLE, если пуст).
+      # Порядок включения — docs/operations/salutespeech_activation.md.
+      VEDAL_TTS_PROVIDER: ${VEDAL_TTS_PROVIDER:-yandex}
+      SALUTE_AUTH_KEY: ${SALUTE_AUTH_KEY:-}
+      SALUTE_SCOPE: ${SALUTE_SCOPE:-SALUTE_SPEECH_PERS}
+      SALUTE_TTS_VOICE: ${SALUTE_TTS_VOICE:-Nec_24000}
+      SALUTE_TTS_FORMAT: ${SALUTE_TTS_FORMAT:-wav16}
+      SALUTE_CA_BUNDLE: ${SALUTE_CA_BUNDLE:-${GIGACHAT_CA_BUNDLE:-}}
+
       # Провайдер cloudru. Статический API-ключ из консоли Cloud.ru
       # (Evolution Foundation Models → API-ключи), OpenAI-совместимая дверь,
       # без OAuth и без корня Минцифры. Модели — идентификаторы с семейством,

@@ -14,21 +14,22 @@ import static org.springframework.http.HttpStatus.*;
 @RequestMapping("/api/assistant/v1/voice")
 public class VoiceController {
     // Распознавание — за выбранной дверью (VEDAL_STT_PROVIDER: yandex | cloudru),
-    // синтез — всегда SpeechKit: у Cloud.ru модели синтеза нет.
+    // озвучивание — за своей (VEDAL_TTS_PROVIDER: yandex | salute).
     private final SpeechToText recognizer;
-    private final SpeechKit speech;
+    private final TextToSpeech voice;
     private final RateLimit limit = new RateLimit(20, Duration.ofMinutes(10));
     private final Semaphore slots = new Semaphore(3);
-    public VoiceController(SpeechToText recognizer, SpeechKit speech) {
+    /** Распознаёт тот, кого выбрал VEDAL_STT_PROVIDER; озвучивает — VEDAL_TTS_PROVIDER. */
+    public VoiceController(SpeechToText recognizer, TextToSpeech voice) {
         this.recognizer = recognizer;
-        this.speech = speech;
+        this.voice = voice;
     }
 
     @GetMapping
     public ResponseEntity<?> status() {
         // «Доступен» — когда есть обе половины: посетитель и диктует, и слушает.
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                .body(Map.of("available", recognizer.available() && speech.available()));
+                .body(Map.of("available", recognizer.available() && voice.available()));
     }
 
     private void enter(HttpServletRequest request) {
@@ -60,7 +61,7 @@ public class VoiceController {
         enter(request);
         try {
             return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                    .contentType(MediaType.parseMediaType("audio/wav")).body(speech.synthesize(body.text()));
+                    .contentType(MediaType.parseMediaType("audio/wav")).body(voice.synthesize(body.text()));
         } finally { slots.release(); }
     }
 }
