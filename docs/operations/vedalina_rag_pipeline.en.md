@@ -141,6 +141,11 @@ not leave the old vectors in the index as dead weight.
 
 ## Dimension and model
 
+The embeddings provider is `VEDAL_RAG_PROVIDER`: `yandex` (the default,
+inherited from `VEDAL_LLM_PROVIDER`) or `gigachat`. Below is about Yandex;
+Sber and the re-indexing required when switching providers are in
+[gigachat_activation.en.md](gigachat_activation.en.md#vector-search-pgvector-and-re-indexing).
+
 Embeddings come from Yandex Foundation Models, the
 `foundationModels/v1/textEmbedding` endpoint, using the same key as YandexGPT.
 
@@ -341,6 +346,9 @@ VEDAL_RAG_DOCUMENT_MODEL_URI=emb://<folder_id>/text-search-doc/latest
 VEDAL_RAG_QUERY_MODEL_URI=emb://<folder_id>/text-search-query/latest
 VEDAL_RAG_MAX_DISTANCE=0.45
 ```
+
+With `VEDAL_RAG_PROVIDER=gigachat` the pair of model addresses is not needed;
+`GIGACHAT_EMBEDDINGS_MODEL` and the `GIGACHAT_AUTH_KEY` key are used instead.
 
 No separate key is needed — `VEDAL_YANDEXGPT_API_KEY` is used: embeddings live
 in the same Foundation Models and are billed to the same service account.

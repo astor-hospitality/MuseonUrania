@@ -140,7 +140,12 @@ docker exec vedal-db psql -U vedal -d vedal -c "ALTER DATABASE vedal REFRESH COL
 
 ## Размерность и модель
 
-Эмбеддинги — Yandex Foundation Models, дверь
+Провайдер эмбеддингов — `VEDAL_RAG_PROVIDER`: `yandex` (по умолчанию,
+наследует `VEDAL_LLM_PROVIDER`) или `gigachat`. Ниже — про Яндекс; про Сбер
+и переиндексацию при смене провайдера —
+[gigachat_activation.md](gigachat_activation.md#поиск-по-близости-pgvector-и-переиндексация).
+
+Эмбеддинги Яндекса — Yandex Foundation Models, дверь
 `foundationModels/v1/textEmbedding`, ключ тот же, что у YandexGPT.
 
 Моделей **две**, и это не дублирование: `text-search-doc` кодирует фрагменты
@@ -153,6 +158,12 @@ docker exec vedal-db psql -U vedal -d vedal -c "ALTER DATABASE vedal REFRESH COL
 на слово — длина пришедшего вектора сверяется с ожидаемой, и расхождение
 роняет индексацию с внятным сообщением. Иначе смена модели была бы заметна
 не по отказу, а по тому, что ответы стали хуже.
+
+Сверка идёт и раньше первой индексации — на старте: `KnowledgeStore`
+читает размерность колонки из `pg_attribute` и сравнивает с моделью.
+У GigaChat вектор длины 1024, и портал с `VEDAL_RAG_PROVIDER=gigachat`
+поверх колонки `vector(256)` не поднимется, а скажет, что нужна миграция
+колонки и полная переиндексация.
 
 ## Как это связано с YandexGPT
 
@@ -338,6 +349,8 @@ VEDAL_RAG_MAX_DISTANCE=0.45
 
 Ключ отдельный не нужен — берётся `VEDAL_YANDEXGPT_API_KEY`: эмбеддинги живут
 в том же Foundation Models и оплачиваются тем же сервисным аккаунтом.
+С `VEDAL_RAG_PROVIDER=gigachat` пара адресов не нужна, вместо неё —
+`GIGACHAT_EMBEDDINGS_MODEL` и ключ `GIGACHAT_AUTH_KEY`.
 
 Половинчатая настройка роняет старт с внятным сообщением: включённый режим
 без ключа — это портал, который молча работает наполовину, и заметить такое

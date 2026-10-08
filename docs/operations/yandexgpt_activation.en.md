@@ -4,8 +4,11 @@
 
 ## What the code already does
 
-`VEDAL_ASSISTANT_ENGINE=yandexgpt` turns YandexGPT into a wording layer on top of
-the local safe search. `DeterministicSearch` picks only the sources allowed for
+`VEDAL_ASSISTANT_ENGINE=model` with the provider `VEDAL_LLM_PROVIDER=yandex`
+(the default; the old `VEDAL_ASSISTANT_ENGINE=yandexgpt` is still accepted)
+turns YandexGPT into a wording layer on top of the local safe search. The
+second provider is Sber's GigaChat, switched by the same variable:
+[gigachat_activation.en.md](gigachat_activation.en.md). `DeterministicSearch` picks only the sources allowed for
 the current contour first; the model then receives an already prepared
 `APPROVED_CONTEXT`.
 
@@ -15,13 +18,18 @@ the regular handoff to a human.
 ## Environment variables
 
 ```env
-VEDAL_ASSISTANT_ENGINE=yandexgpt
+VEDAL_ASSISTANT_ENGINE=model
+VEDAL_LLM_PROVIDER=yandex
 VEDAL_YANDEXGPT_MODEL_URI=gpt://<folder_id>/yandexgpt/latest
 VEDAL_YANDEXGPT_API_KEY=<service account api key>
-VEDAL_YANDEXGPT_TEMPERATURE=0.2
-VEDAL_YANDEXGPT_MAX_TOKENS=600
-VEDAL_YANDEXGPT_FALLBACK=true
+VEDAL_LLM_TEMPERATURE=0.2
+VEDAL_LLM_MAX_TOKENS=600
+VEDAL_LLM_FALLBACK=true
 ```
+
+Temperature, the token limit and the behaviour when the model is silent are
+shared by both providers; the old names `VEDAL_YANDEXGPT_TEMPERATURE`,
+`_MAX_TOKENS`, `_FALLBACK` are still accepted.
 
 Never keep the key in Jira, GitHub, email or the repository. Hand it over
 through a protected channel only and put it into `backend/.env` on the VM

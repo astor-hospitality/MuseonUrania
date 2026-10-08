@@ -32,7 +32,7 @@ VEDAL Portal объединяет публичный сайт и закрыту�
 | Данные | PostgreSQL 16, транзакционный outbox, Kafka 3.9 в KRaft-режиме |
 | Файлы | S3-совместимое объектное хранилище через AWS SDK |
 | Auth | Keycloak, OAuth2/OIDC, PKCE, роли закрытого контура |
-| AI | YandexGPT API, RAG-пайплайн, pgvector в целевой архитектуре |
+| AI | YandexGPT или GigaChat (переключается настройкой), RAG-пайплайн, pgvector в целевой архитектуре |
 | Инфраструктура | Docker Compose, Caddy/reverse proxy, systemd autodeploy, Yandex Cloud VM |
 
 ## Быстрый запуск
