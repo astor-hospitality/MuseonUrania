@@ -13,14 +13,23 @@ import static org.springframework.http.HttpStatus.*;
 @RestController
 @RequestMapping("/api/assistant/v1/voice")
 public class VoiceController {
-    private final SpeechKit speech;
+    // Распознавание — за выбранной дверью (VEDAL_STT_PROVIDER: yandex | cloudru),
+    // озвучивание — за своей (VEDAL_TTS_PROVIDER: yandex | salute).
+    private final SpeechToText recognizer;
+    private final TextToSpeech voice;
     private final RateLimit limit = new RateLimit(20, Duration.ofMinutes(10));
     private final Semaphore slots = new Semaphore(3);
-    public VoiceController(SpeechKit speech) { this.speech = speech; }
+    /** Распознаёт тот, кого выбрал VEDAL_STT_PROVIDER; озвучивает — VEDAL_TTS_PROVIDER. */
+    public VoiceController(SpeechToText recognizer, TextToSpeech voice) {
+        this.recognizer = recognizer;
+        this.voice = voice;
+    }
 
     @GetMapping
     public ResponseEntity<?> status() {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(Map.of("available", speech.available()));
+        // «Доступен» — когда есть обе половины: посетитель и диктует, и слушает.
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(Map.of("available", recognizer.available() && voice.available()));
     }
 
     private void enter(HttpServletRequest request) {
@@ -40,7 +49,7 @@ public class VoiceController {
             if (pcm.length == 0 || pcm.length > 960000 || pcm.length % 2 != 0)
                 throw new ResponseStatusException(BAD_REQUEST, "Запишите до 30 секунд речи");
             return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                    .body(Map.of("text", speech.recognize(pcm)));
+                    .body(Map.of("text", recognizer.recognize(pcm)));
         } finally { slots.release(); }
     }
 
@@ -52,7 +61,7 @@ public class VoiceController {
         enter(request);
         try {
             return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                    .contentType(MediaType.parseMediaType("audio/wav")).body(speech.synthesize(body.text()));
+                    .contentType(MediaType.parseMediaType("audio/wav")).body(voice.synthesize(body.text()));
         } finally { slots.release(); }
     }
 }

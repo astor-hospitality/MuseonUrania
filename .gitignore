@@ -6,6 +6,7 @@
 # .env.prod.example, который кто-то заполнил по-настоящему.
 !.env.example
 !.env.host.example
+!.env.cloudru.example
 
 # Local agent/session artifacts
 .codex/

@@ -1,0 +1,59 @@
+# Образец vhost соседнего проекта за общим Caddy. НЕ подключается сам:
+# расширение .example маска `import /etc/caddy/sites.d/*.caddy` не берёт.
+#
+# Настоящий файл живёт в репозитории Astor_Butler_MVP и ставится оттуда
+# на машину как /opt/edge/sites.d/c3ag.ru.caddy. Здесь — контракт: что
+# должно сойтись с той стороны, чтобы Caddy до контейнера дотянулся.
+#
+#   1. Контейнер соседа входит в внешнюю docker-сеть `edge`
+#      (в его compose: networks: [default, edge]; networks: edge:
+#      external: true, name: edge).
+#   2. У контейнера фиксированное имя (container_name) — по нему Caddy
+#      его и находит. Имена ниже — договорённость, не факт: подставить те,
+#      что заданы в compose соседа.
+#   3. Порт — внутренний порт процесса в контейнере, НЕ публикуемый
+#      наружу: ports у соседа пустые, 80/443 держит этот Caddy.
+#   4. Сертификат Caddy возьмёт сам, когда A-запись домена укажет на ВМ.
+#      До этого блок можно держать в файле: Caddy попробует, не получит
+#      и повторит позже, остальные хосты это не задевает.
+#
+# Применить после правки файла, без перезапуска стека:
+#   docker exec vedal-proxy caddy reload --config /etc/caddy/Caddyfile
+#
+# Caddy подхватывает файл и при обычном старте контейнера proxy.
+
+c3ag.ru, www.c3ag.ru {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Next.js-фронтенд из Astor_Butler_MVP: контейнер c3ag-web, порт 3000.
+	reverse_proxy c3ag-web:3000 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}
+
+# Бэкенд Astor — позже. Блок можно завести заранее: пока контейнера нет,
+# Caddy отдаёт 502 на этом имени и ничего больше не трогает.
+api.c3ag.ru {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	reverse_proxy astor-api:8080 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}

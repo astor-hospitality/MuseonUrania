@@ -403,6 +403,8 @@ day after the switch, longer if DNS has not propagated everywhere yet.
 
 ## Related documents
 
+- [Migration to the Cloud.ru VM: step by step](cloudru_migration_runbook.en.md) —
+  the same move, but from a dump onto an empty machine, after the old VM died.
 - [Moving to the production perimeter: analysis and recommendation](production_move.en.md).
 - [Backups](backups.en.md).
 - [Connecting the vedal-med.ru domain](domain_cutover_vedal_med_ru.en.md).

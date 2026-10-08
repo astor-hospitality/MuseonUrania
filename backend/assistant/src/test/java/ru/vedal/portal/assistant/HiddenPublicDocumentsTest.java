@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Базы здесь нет: материалы те же, что в {@link VedalinaAnswersTest},
  * и проверяется устройство, а не хранилище. Отсев в запросе к pgvector
  * проверить без базы нельзя — его сторожит повторная проверка в
- * {@link YandexGptEngine}, она проверяется ниже.
+ * {@link ModelEngine}, она проверяется ниже.
  */
 class HiddenPublicDocumentsTest {
 
@@ -184,7 +184,7 @@ class HiddenPublicDocumentsTest {
             "В разделе опубликованы каталог, буклет и технические карточки.");
 
     /** Записывает, что показали модели. */
-    private static final class Model implements YandexGpt {
+    private static final class Model implements ChatModel {
         final List<Message> asked = new ArrayList<>();
 
         @Override
@@ -205,7 +205,7 @@ class HiddenPublicDocumentsTest {
     @Test
     void theModelNeverSeesAHiddenDocument() {
         var model = new Model();
-        var engine = new YandexGptEngine((question, scope) -> List.of(DATASHEET, SECTION_PAGE, PRODUCT),
+        var engine = new ModelEngine((question, scope) -> List.of(DATASHEET, SECTION_PAGE, PRODUCT),
                 model, false, HIDDEN);
 
         var answer = engine.answer("габариты A-2000", LlmEngine.Scope.PUBLIC).orElseThrow();
@@ -224,7 +224,7 @@ class HiddenPublicDocumentsTest {
     @Test
     void onlyHiddenDocumentsFoundMeansNothingFound() {
         var model = new Model();
-        var engine = new YandexGptEngine((question, scope) -> List.of(DATASHEET, SECTION_PAGE),
+        var engine = new ModelEngine((question, scope) -> List.of(DATASHEET, SECTION_PAGE),
                 model, false, HIDDEN);
 
         assertThat(engine.answer("датащит", LlmEngine.Scope.PUBLIC)).isEmpty();
@@ -234,7 +234,7 @@ class HiddenPublicDocumentsTest {
     @Test
     void staffModelPromptKeepsTheDocuments() {
         var model = new Model();
-        var engine = new YandexGptEngine((question, scope) -> List.of(DATASHEET, PRODUCT),
+        var engine = new ModelEngine((question, scope) -> List.of(DATASHEET, PRODUCT),
                 model, false, HIDDEN);
 
         var answer = engine.answer("габариты A-2000", LlmEngine.Scope.STAFF).orElseThrow();

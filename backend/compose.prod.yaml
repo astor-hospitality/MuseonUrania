@@ -134,6 +134,46 @@ services:
       VEDAL_PORTAL_URL: ${VEDAL_PUBLIC_URL:?задайте VEDAL_PUBLIC_URL}
       VEDAL_STORAGE_ROOT: /app/var/documents
       VEDAL_NOTIFICATIONS_MANAGER: ${VEDAL_NOTIFICATIONS_MANAGER:-}
+
+      # ————— Ведалина: движок ответа и поиск по близости —————
+      #
+      # Блок повторяет compose.stand-prod.yaml, и это не копипаста по
+      # недосмотру. В базовом compose.yaml этих переменных нет вовсе:
+      # портал берёт умолчания из application.properties, то есть
+      # deterministic-движок без YandexGPT и без RAG. Стенд передавал их
+      # через своё наложение, а это наложение — нет. Переезд с одного на
+      # другое молча вернул бы Ведалину в режим «только поиск по словам»,
+      # без единой ошибки в журнале: ассистент отвечает, просто хуже.
+      #
+      # Значения те же, что были на стенде; ключи — из backend/.env.
+      VEDAL_ASSISTANT_ENGINE: ${VEDAL_ASSISTANT_ENGINE:-deterministic}
+      VEDAL_YANDEXGPT_ENDPOINT: ${VEDAL_YANDEXGPT_ENDPOINT:-https://llm.api.cloud.yandex.net/foundationModels/v1/completion}
+      VEDAL_YANDEXGPT_MODEL_URI: ${VEDAL_YANDEXGPT_MODEL_URI:-}
+      VEDAL_YANDEXGPT_API_KEY: ${VEDAL_YANDEXGPT_API_KEY:-}
+      VEDAL_YANDEXGPT_TEMPERATURE: ${VEDAL_YANDEXGPT_TEMPERATURE:-0.2}
+      VEDAL_YANDEXGPT_MAX_TOKENS: ${VEDAL_YANDEXGPT_MAX_TOKENS:-600}
+      VEDAL_YANDEXGPT_FALLBACK: ${VEDAL_YANDEXGPT_FALLBACK:-true}
+      VEDAL_RAG_ENABLED: ${VEDAL_RAG_ENABLED:-false}
+      VEDAL_RAG_DOCUMENT_MODEL_URI: ${VEDAL_RAG_DOCUMENT_MODEL_URI:-}
+      VEDAL_RAG_QUERY_MODEL_URI: ${VEDAL_RAG_QUERY_MODEL_URI:-}
+      VEDAL_RAG_MAX_DISTANCE: ${VEDAL_RAG_MAX_DISTANCE:-0.45}
+      VEDAL_SPEECHKIT_API_KEY: ${VEDAL_SPEECHKIT_API_KEY:-}
+      # Распознавание речи: yandex (SpeechKit, ключ выше) | cloudru (Whisper
+      # за дверью Cloud.ru, CLOUDRU_API_KEY из базового compose.yaml).
+      # Озвучивание выбирается отдельно — VEDAL_TTS_PROVIDER ниже.
+      VEDAL_STT_PROVIDER: ${VEDAL_STT_PROVIDER:-yandex}
+      CLOUDRU_STT_MODEL: ${CLOUDRU_STT_MODEL:-openai/whisper-large-v3}
+      # Озвучивание: yandex (SpeechKit, ключ выше) или salute (SaluteSpeech
+      # Сбера, docs/operations/salutespeech_activation.md). Распознавание —
+      # VEDAL_STT_PROVIDER выше.
+      VEDAL_TTS_PROVIDER: ${VEDAL_TTS_PROVIDER:-yandex}
+      SALUTE_AUTH_KEY: ${SALUTE_AUTH_KEY:-}
+      SALUTE_SCOPE: ${SALUTE_SCOPE:-SALUTE_SPEECH_PERS}
+      SALUTE_TTS_VOICE: ${SALUTE_TTS_VOICE:-Nec_24000}
+      SALUTE_TTS_FORMAT: ${SALUTE_TTS_FORMAT:-wav16}
+      SALUTE_CA_BUNDLE: ${SALUTE_CA_BUNDLE:-${GIGACHAT_CA_BUNDLE:-}}
+      VEDAL_CONVERSATION_DIGEST_ENABLED: ${VEDAL_CONVERSATION_DIGEST_ENABLED:-true}
+      VEDAL_S3_REGION: ${VEDAL_S3_REGION:-ru-central1}
     ports: !override []
     restart: unless-stopped
     # Плавная остановка настроена в приложении; даём ей время отработать,
@@ -165,7 +205,16 @@ services:
       # что снаружи в неё не попасть — а кто в неё попал, тому шлюз уже
       # не преграда.
       VEDAL_GATEWAY_TRUSTED_PROXY: ${VEDAL_GATEWAY_TRUSTED_PROXY:-(10|127|172\.(1[6-9]|2[0-9]|3[01])|192\.168)\..*}
-    ports: !override []
+    # Петля, и только петля. Снаружи порт не виден: docker вешает DNAT
+    # на 127.0.0.1, и из интернета в него не попасть — это тот же приём,
+    # что в compose.host.yaml. Зачем он здесь, если наружу всё отдаёт Caddy:
+    # сторож (scripts/healthcheck.sh) и деплой (scripts/deploy-prod.sh)
+    # спрашивают здоровье по 127.0.0.1:18080 — изнутри машины, минуя DNS,
+    # TLS и внешний канал. Ходить к себе же через публичный адрес и домен
+    # на облачной ВМ ненадёжно: NAT провайдера не всегда умеет «шпильку»,
+    # и проверка падала бы на сети, когда стек здоров.
+    ports: !override
+      - "127.0.0.1:${VEDAL_GATEWAY_LOOPBACK_PORT:-18080}:8080"
     restart: unless-stopped
     stop_grace_period: 40s
     logging: *logging
@@ -192,6 +241,12 @@ services:
       # политика безопасности не пустит скрипт счётчика, и он молча
       # не заработает.
       NEXT_PUBLIC_YANDEX_METRIKA_ID: ${VEDAL_METRIKA_ID:-}
+      # Тот же рубильник раздела документов, что у портала
+      # (VEDAL_PUBLIC_DOCUMENTS_ENABLED в базовом compose.yaml). Стенд
+      # передавал его сайту через своё наложение; без строки здесь сайт
+      # в проде брал бы умолчание сборки, а портал — значение из .env,
+      # и витрина с API разошлись бы.
+      NEXT_PUBLIC_DOCUMENTS_ENABLED: ${VEDAL_PUBLIC_DOCUMENTS_ENABLED:-false}
     ports: !override []
     restart: unless-stopped
     logging: *logging
@@ -235,8 +290,31 @@ services:
       VEDAL_ANALYTICS_ORIGINS: ${VEDAL_ANALYTICS_ORIGINS:-}
     volumes:
       - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Хосты соседних проектов на той же ВМ. Caddyfile делает
+      # `import /etc/caddy/sites.d/*.caddy`; каталог на машине — общий
+      # для всех проектов, а не часть этого репозитория: чужой vhost
+      # лежит в чужом репозитории и ставится оттуда. Образец —
+      # proxy/sites.d/c3ag.ru.caddy.example, порядок — в
+      # docs/operations/cloudru_migration_runbook.md.
+      - ${VEDAL_EDGE_SITES_DIR:-/opt/edge/sites.d}:/etc/caddy/sites.d:ro
       - vedal-caddy-data:/data
       - vedal-caddy-config:/config
+    # ————— общая сеть с соседними проектами —————
+    #
+    # ВМ одна, а проектов на ней несколько: рядом живёт c3ag.ru
+    # (Astor_Butler_MVP), позже — бэкенд Astor. Порты 80 и 443 держит
+    # ровно один процесс, и это этот Caddy. Чтобы он дотягивался до
+    # контейнеров другого compose-проекта, обе стороны входят в одну
+    # внешнюю docker-сеть `edge`. Внешнюю — то есть созданную руками
+    # (scripts/bootstrap-cloudru.sh), а не этим файлом: сеть, которую
+    # compose считает своей, он и удалит на `down`, уронив соседа.
+    #
+    # В `edge` стоит ТОЛЬКО proxy. База, Kafka, Keycloak, портал и шлюз
+    # остаются в сети проекта `vedal` и соседу по имени не видны —
+    # периметр compose.prod.yaml этим не расширяется ни на один сервис.
+    networks:
+      - default
+      - edge
     restart: unless-stopped
     logging: *logging
 
@@ -319,3 +397,11 @@ volumes:
   vedal-caddy-data:
   vedal-caddy-config:
   vedal-backups:
+
+networks:
+  # Создаётся один раз на машине: `docker network create edge`. Имя
+  # параметром — чтобы сосед и мы ссылались на одну и ту же сеть из
+  # одного места (.env), а не держали его в двух репозиториях прошитым.
+  edge:
+    name: ${VEDAL_EDGE_NETWORK:-edge}
+    external: true

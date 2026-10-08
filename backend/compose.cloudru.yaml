@@ -1,0 +1,14 @@
+# Local override for the Cloud.ru host (untracked).
+# 1) Stock keycloak image is not pre-built for postgres, so `--optimized` makes it exit(2).
+# 2) Cloud.ru NAT has no hairpin: containers cannot reach the VM's own public IP, yet portal and
+#    api-gateway fetch OIDC metadata/JWKS from the public Keycloak URL. Point that hostname at the
+#    docker host, where Caddy answers on 443 with the real certificate.
+services:
+  keycloak:
+    command: ["start", "--import-realm"]
+  api-gateway:
+    extra_hosts:
+      - "${VEDAL_KEYCLOAK_DOMAIN}:host-gateway"
+  portal:
+    extra_hosts:
+      - "${VEDAL_KEYCLOAK_DOMAIN}:host-gateway"

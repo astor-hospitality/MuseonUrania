@@ -29,10 +29,29 @@
 		<!-- Boot 4.0.7 управляет Netty 4.2.15.Final. Патч 4.2.17.Final
 		     закрывает CVE-2026-75595 и сохраняет линию 4.2.x. -->
 		<netty.version>4.2.17.Final</netty.version>
+		<!-- BouncyCastle приходит транзитивно (nimbus-jose-jwt через oauth2-resource-server);
+		     1.81.1 несёт CVE-2026-8763 (CRITICAL), закрыто начиная с 1.85. Три артефакта
+		     держатся одной версией — смешивать линии bcprov/bcpkix/bcutil нельзя. -->
+		<bouncycastle.version>1.86</bouncycastle.version>
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk18on</artifactId>
+				<version>${bouncycastle.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcpkix-jdk18on</artifactId>
+				<version>${bouncycastle.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcutil-jdk18on</artifactId>
+				<version>${bouncycastle.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>

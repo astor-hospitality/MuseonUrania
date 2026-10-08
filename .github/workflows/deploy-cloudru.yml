@@ -1,0 +1,148 @@
+# Выкатка прод-контура на ВМ Cloud.ru по SSH.
+#
+# ————— почему теперь push, а не pull —————
+#
+# На стенде выкатка шла опросом: машина сама спрашивала GitHub про main
+# (scripts/autodeploy.sh, vedal-autodeploy.timer). Причин было две, и обе
+# снял переезд: на той ВМ жил чужой боевой сайт, под который нельзя было
+# открывать SSH всему пулу раннеров GitHub; и репозиторий публичный, так что
+# self-hosted раннер превращал бы чужой PR в выполнение кода на машине.
+#
+# Здесь машина своя, раннер — GitHub'овский (ubuntu-latest), а на машину он
+# заходит одним SSH-ключом с правами пользователя ubuntu и запускает ровно
+# один скрипт из репозитория. Что остаётся от прежних рисков и чем закрыто:
+#
+#   - ключ лежит в секретах окружения production, а не репозитория: форк
+#     его не видит, и workflow из PR сюда не попадает — он запускается
+#     только из main этого репозитория (условие на github.repository);
+#   - окружение production требует подтверждения рецензентом (настраивается
+#     в Settings → Environments → production → Required reviewers): пуш
+#     в main сам по себе ничего не выкатывает, кто-то нажимает Approve;
+#   - permissions: contents: read — токену GITHUB_TOKEN нечего делать
+#     с репозиторием, он не нужен вовсе;
+#   - concurrency без cancel-in-progress: две выкатки подряд идут по очереди,
+#     а не обрывают друг друга посреди пересоздания контейнеров;
+#   - в журнале нет ни адреса, ни ключа: GitHub маскирует секреты сам,
+#     а скрипт на машине печатает только имена контейнеров и коды.
+#
+# SSH на машине остаётся открытым всему интернету (ufw: 22), потому что
+# пул адресов раннеров огромен и меняется; защита — только ключ, пароль
+# выключен (PasswordAuthentication no — см. runbook, §2).
+#
+# ————— секреты окружения production —————
+#
+#   CLOUDRU_SSH_HOST         публичный IP или имя ВМ (176.123.165.162)
+#   CLOUDRU_SSH_PORT         порт SSH (22)
+#   CLOUDRU_SSH_USER         ubuntu
+#   CLOUDRU_SSH_KEY          приватный ключ ed25519 ТОЛЬКО для деплоя;
+#                            публичная половина — в ~ubuntu/.ssh/authorized_keys
+#   CLOUDRU_SSH_KNOWN_HOSTS  строка(и) ssh-keyscan -p <порт> <хост>:
+#                            без неё первый заход доверял бы любому, кто
+#                            ответит на этом адресе
+
+name: Выкатка на Cloud.ru
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Ветка для выкатки (обычно main)"
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-cloudru-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Прод — выкатка по SSH
+    runs-on: ubuntu-latest
+    # Только из этого репозитория: форк с таким же workflow секретов
+    # не получит, но и пытаться ему незачем.
+    if: github.repository == 'astor-hospitality/MuseonUrania'
+    environment:
+      name: production
+      url: https://vedal-med.ru
+    # Сборка образов на машине идёт минуты; потолок — чтобы зависшая
+    # выкатка не держала очередь concurrency вечно.
+    timeout-minutes: 40
+
+    steps:
+      # Ветка — из ручного запуска или main при пуше. Проверяется маской,
+      # потому что уходит в командную строку на машине: имя ветки с
+      # точкой с запятой — не ветка.
+      - name: Ветка
+        id: ref
+        env:
+          INPUT_BRANCH: ${{ github.event.inputs.branch }}
+        run: |
+          branch="${INPUT_BRANCH:-main}"
+          if ! printf '%s' "$branch" | grep -Eq '^[A-Za-z0-9._/-]+$'; then
+            echo "недопустимое имя ветки: $branch" >&2
+            exit 1
+          fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Ключ и известные хосты
+        env:
+          SSH_KEY: ${{ secrets.CLOUDRU_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.CLOUDRU_SSH_KNOWN_HOSTS }}
+        run: |
+          set -eu
+          : "${SSH_KEY:?нет секрета CLOUDRU_SSH_KEY}"
+          : "${SSH_KNOWN_HOSTS:?нет секрета CLOUDRU_SSH_KNOWN_HOSTS (ssh-keyscan -p <порт> <хост>)}"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      # На машине: обновить рабочую копию до нужной ветки и запустить
+      # деплой из репозитория. Скрипт сам делает fetch/reset ещё раз
+      # (и перезапускается с копии, чтобы reset не подменил его на ходу),
+      # но reset здесь нужен, чтобы запустилась СВЕЖАЯ версия скрипта,
+      # а не та, что лежала на машине до пуша.
+      - name: Выкатка
+        env:
+          SSH_HOST: ${{ secrets.CLOUDRU_SSH_HOST }}
+          SSH_PORT: ${{ secrets.CLOUDRU_SSH_PORT }}
+          SSH_USER: ${{ secrets.CLOUDRU_SSH_USER }}
+          BRANCH: ${{ steps.ref.outputs.branch }}
+        run: |
+          set -eu
+          : "${SSH_HOST:?нет секрета CLOUDRU_SSH_HOST}"
+          : "${SSH_USER:?нет секрета CLOUDRU_SSH_USER}"
+          ssh -i ~/.ssh/deploy_key \
+              -p "${SSH_PORT:-22}" \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -o ConnectTimeout=20 \
+              -o ServerAliveInterval=30 \
+              "$SSH_USER@$SSH_HOST" \
+              "set -eu; cd /opt/vedal-portal \
+               && git fetch -q origin '$BRANCH' \
+               && git checkout -q '$BRANCH' \
+               && git reset -q --hard 'origin/$BRANCH' \
+               && exec scripts/deploy-prod.sh '$BRANCH'"
+
+      # Проверка снаружи — после той, что скрипт сделал изнутри машины.
+      # Здесь именно внешний взгляд: DNS, сертификат, канал. Не роняет
+      # работу: деплой уже прошёл, а внешний канал к ВМ — не его вина;
+      # но строка в журнале будет.
+      - name: Сайт отвечает снаружи
+        continue-on-error: true
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 https://vedal-med.ru/ || echo 000)
+          echo "https://vedal-med.ru/ → $code"
+          [ "$code" = 200 ]
+
+      - name: Убрать ключ
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

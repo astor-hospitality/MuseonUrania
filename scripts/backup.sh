@@ -115,13 +115,14 @@ trim "$weekly" "$KEEP_WEEKLY"
 # локальные копии всё равно ценнее их отсутствия.
 if [ -n "${VEDAL_BACKUP_S3_BUCKET:-}" ] && [ -n "${VEDAL_S3_ACCESS_KEY:-}" ]; then
     echo "== выгружаем в ${VEDAL_BACKUP_S3_BUCKET}"
+    # aws-cli, а не mc: образы MinIO в 2025 исчезли из Docker Hub, а с quay.io тянутся не те теги.
     docker run --rm \
-        -e AK="$VEDAL_S3_ACCESS_KEY" -e SK="${VEDAL_S3_SECRET_KEY:-}" \
+        -e AWS_ACCESS_KEY_ID="$VEDAL_S3_ACCESS_KEY" -e AWS_SECRET_ACCESS_KEY="${VEDAL_S3_SECRET_KEY:-}" \
+        -e AWS_DEFAULT_REGION="${VEDAL_S3_REGION:-ru-central1}" -e AWS_EC2_METADATA_DISABLED=true \
         -v "$daily:/dumps:ro" \
-        --entrypoint sh minio/mc:RELEASE.2025-04-16T18-13-26Z -c "
-            mc alias set s3 ${VEDAL_S3_ENDPOINT:-https://storage.yandexcloud.net} \$AK \$SK > /dev/null
-            mc cp --quiet /dumps/$(basename "$dump") s3/${VEDAL_BACKUP_S3_BUCKET}/db/$(basename "$dump")
-        " && echo "   выгружено" || echo "   ВНИМАНИЕ: выгрузка не удалась, копия осталась только на машине"
+        amazon/aws-cli:2.22.35 --endpoint-url "${VEDAL_S3_ENDPOINT:-https://storage.yandexcloud.net}" \
+        s3 cp --quiet "/dumps/$(basename "$dump")" "s3://${VEDAL_BACKUP_S3_BUCKET}/db/$(basename "$dump")" \
+        && echo "   выгружено" || echo "   ВНИМАНИЕ: выгрузка не удалась, копия осталась только на машине"
 else
     echo "== выгрузка вне машины не настроена (VEDAL_BACKUP_S3_BUCKET, ключ с правом записи)"
     echo "   копии лежат только на этой машине: потеря ВМ — потеря копий"

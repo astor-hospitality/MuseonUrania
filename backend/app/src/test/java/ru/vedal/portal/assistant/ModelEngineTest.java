@@ -18,13 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * и что происходит, когда она молчит. Настоящая модель отвечает по-разному
  * на один и тот же вопрос, и тест на её текст был бы тестом на погоду.
  */
-class YandexGptEngineTest extends PostgresTestBase {
+class ModelEngineTest extends PostgresTestBase {
 
     @Autowired
     DeterministicSearch search;
 
     /** Записывает, о чём спросили, и отвечает заготовкой. */
-    private static final class Подставная implements YandexGpt {
+    private static final class Подставная implements ChatModel {
         final List<Message> asked = new ArrayList<>();
         String reply = "Инкубатор-трансформер VEDAL A-2000 [1] подходит для отделения.";
         RuntimeException fail;
@@ -41,7 +41,7 @@ class YandexGptEngineTest extends PostgresTestBase {
     @Test
     void theAnswerComesFromTheModelAndTheLinksFromThePortal() {
         var model = new Подставная();
-        var engine = new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN);
+        var engine = new ModelEngine(search, model, true, PublicDocuments.HIDDEN);
 
         var answer = engine.answer("Что такое VEDAL A-2000?", LlmEngine.Scope.PUBLIC).orElseThrow();
 
@@ -59,7 +59,7 @@ class YandexGptEngineTest extends PostgresTestBase {
     @Test
     void withoutMaterialsTheModelIsNotAskedAtAll() {
         var model = new Подставная();
-        var engine = new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN);
+        var engine = new ModelEngine(search, model, true, PublicDocuments.HIDDEN);
 
         var answer = engine.answer("расскажи про погоду в Кабуле", LlmEngine.Scope.PUBLIC);
 
@@ -75,12 +75,12 @@ class YandexGptEngineTest extends PostgresTestBase {
     @Test
     void theModelSeesTheFoundMaterialsNumberedTheSameWayAsTheLinks() {
         var model = new Подставная();
-        var engine = new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN);
+        var engine = new ModelEngine(search, model, true, PublicDocuments.HIDDEN);
 
         var answer = engine.answer("Что такое VEDAL A-2000?", LlmEngine.Scope.PUBLIC).orElseThrow();
 
         var rules = model.asked.stream()
-                .filter(m -> m.role() == YandexGpt.Role.SYSTEM)
+                .filter(m -> m.role() == ChatModel.Role.SYSTEM)
                 .findFirst()
                 .orElseThrow()
                 .text();
@@ -102,9 +102,9 @@ class YandexGptEngineTest extends PostgresTestBase {
     @Test
     void theQuestionIsAskedAsTheVisitorsOwnMessage() {
         var model = new Подставная();
-        new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN).answer("Что такое VEDAL A-2000?", LlmEngine.Scope.PUBLIC);
+        new ModelEngine(search, model, true, PublicDocuments.HIDDEN).answer("Что такое VEDAL A-2000?", LlmEngine.Scope.PUBLIC);
 
-        var user = model.asked.stream().filter(m -> m.role() == YandexGpt.Role.USER).toList();
+        var user = model.asked.stream().filter(m -> m.role() == ChatModel.Role.USER).toList();
         assertThat(user).hasSize(1);
         assertThat(user.getFirst().text()).isEqualTo("Что такое VEDAL A-2000?");
     }
@@ -112,7 +112,7 @@ class YandexGptEngineTest extends PostgresTestBase {
     @Test
     void aFollowUpUsesOnlyItsOwnConversationContext() {
         var model = new Подставная();
-        var engine = new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN);
+        var engine = new ModelEngine(search, model, true, PublicDocuments.HIDDEN);
 
         var answer = engine.answer("А сколько он весит?",
                 "Посетитель: Расскажи про VEDAL R1.\nВедалина: VEDAL R1 — открытая система.",
@@ -120,7 +120,7 @@ class YandexGptEngineTest extends PostgresTestBase {
 
         assertThat(answer.sources()).anyMatch(source -> source.title().contains("VEDAL R1"));
         var system = model.asked.stream()
-                .filter(message -> message.role() == YandexGpt.Role.SYSTEM)
+                .filter(message -> message.role() == ChatModel.Role.SYSTEM)
                 .findFirst().orElseThrow().text();
         assertThat(system).contains("Контекст текущего разговора:")
                 .contains("Расскажи про VEDAL R1");
@@ -130,7 +130,7 @@ class YandexGptEngineTest extends PostgresTestBase {
     @Test
     void aPunctuatedFollowUpUsesTheConversationContextForSearch() {
         var model = new Подставная();
-        var engine = new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN);
+        var engine = new ModelEngine(search, model, true, PublicDocuments.HIDDEN);
 
         // Изделие — R2, а не T-100: T-100 снят с публикации в каталоге (V40),
         // и находился он только строкой перечня документов. При скрытом
@@ -149,7 +149,7 @@ class YandexGptEngineTest extends PostgresTestBase {
         var model = new Подставная();
         var chunks = new ArrayList<String>();
 
-        new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN)
+        new ModelEngine(search, model, true, PublicDocuments.HIDDEN)
                 .answer("Что такое VEDAL A-2000?", LlmEngine.Scope.PUBLIC, chunks::add);
 
         assertThat(String.join("", chunks)).isEqualTo(model.reply);
@@ -161,7 +161,7 @@ class YandexGptEngineTest extends PostgresTestBase {
     void whenTheModelIsDownTheFoundMaterialsAreStillAnswered() {
         var model = new Подставная();
         model.fail = new IllegalStateException("Модель недоступна");
-        var engine = new YandexGptEngine(search, model, true, PublicDocuments.HIDDEN);
+        var engine = new ModelEngine(search, model, true, PublicDocuments.HIDDEN);
 
         var answer = engine.answer("Что такое VEDAL A-2000?", LlmEngine.Scope.PUBLIC).orElseThrow();
 

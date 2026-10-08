@@ -83,6 +83,14 @@ WORKDIR /app
 # этой строки.
 COPY --from=build --chown=vedal:vedal /build/app/target/portal.jar app.jar
 
+# Корневые сертификаты, которых нет в хранилище JVM: «Russian Trusted
+# Root CA» Минцифры, которым подписаны двери GigaChat. Каталог едет в образ
+# целиком (с README, если сертификата ещё нет), а подключается явно —
+# GIGACHAT_CA_BUNDLE=/app/certs/russian_trusted_root_ca.pem: корень
+# добавляется к штатным, а не заменяет их, и проверка TLS не выключается.
+# Пока провайдер — Яндекс, каталог никому не мешает.
+COPY --chown=vedal:vedal certs/ /app/certs/
+
 # Каталог для режима vedal.storage.kind=local. В стеке compose хранилище
 # объектное, и этот каталог остаётся пустым — но образ не должен падать
 # только потому, что кто-то запустил его без объектного хранилища.
