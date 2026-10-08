@@ -13,14 +13,22 @@ import static org.springframework.http.HttpStatus.*;
 @RestController
 @RequestMapping("/api/assistant/v1/voice")
 public class VoiceController {
+    // Распознавание — за выбранной дверью (VEDAL_STT_PROVIDER: yandex | cloudru),
+    // синтез — всегда SpeechKit: у Cloud.ru модели синтеза нет.
+    private final SpeechToText recognizer;
     private final SpeechKit speech;
     private final RateLimit limit = new RateLimit(20, Duration.ofMinutes(10));
     private final Semaphore slots = new Semaphore(3);
-    public VoiceController(SpeechKit speech) { this.speech = speech; }
+    public VoiceController(SpeechToText recognizer, SpeechKit speech) {
+        this.recognizer = recognizer;
+        this.speech = speech;
+    }
 
     @GetMapping
     public ResponseEntity<?> status() {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(Map.of("available", speech.available()));
+        // «Доступен» — когда есть обе половины: посетитель и диктует, и слушает.
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(Map.of("available", recognizer.available() && speech.available()));
     }
 
     private void enter(HttpServletRequest request) {
@@ -40,7 +48,7 @@ public class VoiceController {
             if (pcm.length == 0 || pcm.length > 960000 || pcm.length % 2 != 0)
                 throw new ResponseStatusException(BAD_REQUEST, "Запишите до 30 секунд речи");
             return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                    .body(Map.of("text", speech.recognize(pcm)));
+                    .body(Map.of("text", recognizer.recognize(pcm)));
         } finally { slots.release(); }
     }
 

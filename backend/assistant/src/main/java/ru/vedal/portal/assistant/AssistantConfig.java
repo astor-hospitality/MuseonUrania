@@ -106,6 +106,44 @@ public class AssistantConfig {
     }
 
     /**
+     * Чья дверь распознаёт речь: SpeechKit Яндекса или Whisper за дверью
+     * Cloud.ru — {@code VEDAL_STT_PROVIDER}, {@code yandex} по умолчанию.
+     *
+     * <p>Настройка своя, отдельная от {@code VEDAL_LLM_PROVIDER}, и по той же
+     * причине, по которой {@code VEDAL_RAG_PROVIDER} отделён от генерации:
+     * голос и модель переезжают в разное время, и стенд, где модель уже
+     * на Cloud.ru, а ключ SpeechKit ещё жив, не должен терять голос
+     * молча. Умолчание — Яндекс: стенд без этой переменной после обновления
+     * распознаёт тем же, чем распознавал.
+     *
+     * <p>Синтез речи выбором не затрагивается и остаётся на SpeechKit:
+     * у Cloud.ru Foundation Models модели синтеза нет.
+     *
+     * <p>Половинчатая пара «провайдер + ключ» роняет старт с текстом,
+     * называющим переменные ({@link CloudRuSettings#speechToText}),
+     * а опечатка в провайдере — отказ, а не тихий откат к Яндексу.
+     */
+    @Bean
+    SpeechToText speechToText(SpeechKit speechKit, CloudRuSettings cloudru, ObjectMapper json,
+                              @Value("${vedal.assistant.stt.provider:" + YANDEX + "}") String provider,
+                              @Value("${vedal.assistant.cloudru.stt-model:" + CloudRuSettings.DEFAULT_STT_MODEL + "}")
+                              String sttModel,
+                              @Value("${vedal.assistant.stt.language:ru}") String language,
+                              @Value("${vedal.assistant.stt.timeout:PT30S}") Duration timeout) {
+        var name = provider == null ? "" : provider.strip().toLowerCase(java.util.Locale.ROOT);
+        return switch (name) {
+            case YANDEX -> new SpeechKitSpeechToText(speechKit);
+            case CloudRuSettings.PROVIDER -> {
+                log.info("Ведалина распознаёт речь моделью Cloud.ru {}", sttModel == null ? "" : sttModel.strip());
+                yield cloudru.speechToText(json, sttModel, language, timeout);
+            }
+            default -> throw new IllegalStateException(
+                    "Неизвестный провайдер распознавания речи «" + provider + "». VEDAL_STT_PROVIDER "
+                            + "принимает yandex (SpeechKit) или cloudru (Whisper за дверью Cloud.ru).");
+        };
+    }
+
+    /**
      * Кто отвечает: модель или поиск по словам.
      *
      * <p><b>Почему выбор настройкой, а не наличием ключа.</b> «Есть ключ —

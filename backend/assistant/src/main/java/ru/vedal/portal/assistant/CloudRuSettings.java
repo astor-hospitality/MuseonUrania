@@ -44,6 +44,9 @@ public record CloudRuSettings(
 
     public static final String DEFAULT_EMBEDDINGS_MODEL = "ai-sage/Giga-Embeddings-instruct-480M";
 
+    /** Модель распознавания речи за той же дверью ({@code CLOUDRU_STT_MODEL}). */
+    public static final String DEFAULT_STT_MODEL = "openai/whisper-large-v3";
+
     /** Модель генерации — с проверкой того, что настроено всё нужное. */
     public ChatModel chat(ObjectMapper json, double temperature, int maxTokens, Duration timeout) {
         if (model == null || model.isBlank()) {
@@ -69,6 +72,34 @@ public record CloudRuSettings(
         }
         return new CloudRuEmbeddings(embeddingsUrl(), json, checkedKey(), embeddingsModel.strip(),
                 embeddingsDimension, timeout);
+    }
+
+    /**
+     * Распознавание речи — Whisper за той же дверью и с тем же ключом.
+     *
+     * <p>Модель приходит снаружи ({@code CLOUDRU_STT_MODEL}), а не лежит
+     * в записи: распознавание выбирается своей настройкой
+     * ({@code VEDAL_STT_PROVIDER}), и остальным полям оно не нужно.
+     * Отказ без ключа — свой, со словами про речь: сообщение
+     * {@link #checkedKey()} советует переключить модель, а здесь
+     * переключать нужно распознавание.
+     */
+    public SpeechToText speechToText(ObjectMapper json, String sttModel, String language, Duration timeout) {
+        if (sttModel == null || sttModel.isBlank()) {
+            throw new IllegalStateException(
+                    "CLOUDRU_STT_MODEL пуст: ожидается идентификатор модели распознавания "
+                            + "из каталога Cloud.ru, например " + DEFAULT_STT_MODEL + ".");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("""
+                    Провайдер распознавания речи cloudru (VEDAL_STT_PROVIDER), но ключ не задан.
+                    Нужна переменная окружения CLOUDRU_API_KEY — API-ключ из консоли \
+                    Cloud.ru (console.cloud.ru → Evolution Foundation Models → API-ключи), \
+                    тот же, что у генерации. Чтобы распознавать по-прежнему через Яндекс — \
+                    VEDAL_STT_PROVIDER=yandex (это умолчание) и VEDAL_SPEECHKIT_API_KEY.""");
+        }
+        return new CloudRuWhisperSpeechToText(transcriptionsUrl(), json, checkedKey(), sttModel.strip(),
+                language, timeout);
     }
 
     /**
@@ -108,6 +139,10 @@ public record CloudRuSettings(
 
     public URI embeddingsUrl() {
         return URI.create(apiRoot() + CloudRuEmbeddings.PATH);
+    }
+
+    public URI transcriptionsUrl() {
+        return URI.create(apiRoot() + CloudRuWhisperSpeechToText.PATH);
     }
 
     private String apiRoot() {
