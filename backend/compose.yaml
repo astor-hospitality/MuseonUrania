@@ -555,6 +555,49 @@ services:
       # задаёт одно состояние во всех трёх местах.
       VEDAL_PUBLIC_DOCUMENTS_ENABLED: ${VEDAL_PUBLIC_DOCUMENTS_ENABLED:-false}
 
+      # Ведалина: кто формулирует ответ и чья модель. Значения из .env сами
+      # внутрь контейнера не попадают — только через строки ниже; до этого
+      # блока VEDAL_ASSISTANT_ENGINE в backend/.env до портала не доезжал.
+      #
+      # engine: deterministic — поиск по опубликованному (умолчание, ключей
+      # не нужно), model — модель поверх того же поиска. Провайдер модели —
+      # VEDAL_LLM_PROVIDER: yandex (YandexGPT) или gigachat (Сбер); ключи
+      # у каждого свои, и нужны только ключи выбранного. Порядок включения —
+      # docs/operations/yandexgpt_activation.md и gigachat_activation.md.
+      VEDAL_ASSISTANT_ENGINE: ${VEDAL_ASSISTANT_ENGINE:-deterministic}
+      VEDAL_LLM_PROVIDER: ${VEDAL_LLM_PROVIDER:-yandex}
+      VEDAL_LLM_FALLBACK: ${VEDAL_LLM_FALLBACK:-true}
+      VEDAL_LLM_TEMPERATURE: ${VEDAL_LLM_TEMPERATURE:-0.2}
+      VEDAL_LLM_MAX_TOKENS: ${VEDAL_LLM_MAX_TOKENS:-600}
+
+      # Провайдер yandex.
+      VEDAL_YANDEXGPT_MODEL_URI: ${VEDAL_YANDEXGPT_MODEL_URI:-}
+      VEDAL_YANDEXGPT_API_KEY: ${VEDAL_YANDEXGPT_API_KEY:-}
+
+      # Провайдер gigachat. Ключ авторизации из кабинета developers.sber.ru
+      # (или пара CLIENT_ID/CLIENT_SECRET), область доступа по договору,
+      # модели — без пересборки. CA_BUNDLE — корень Минцифры, которым
+      # подписаны двери Сбера: файл кладётся в backend/certs/ до сборки
+      # образа и попадает в /app/certs/ (backend/certs/README.md).
+      GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY:-}
+      GIGACHAT_CLIENT_ID: ${GIGACHAT_CLIENT_ID:-}
+      GIGACHAT_CLIENT_SECRET: ${GIGACHAT_CLIENT_SECRET:-}
+      GIGACHAT_SCOPE: ${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}
+      GIGACHAT_MODEL: ${GIGACHAT_MODEL:-GigaChat}
+      GIGACHAT_EMBEDDINGS_MODEL: ${GIGACHAT_EMBEDDINGS_MODEL:-Embeddings}
+      GIGACHAT_EMBEDDINGS_DIMENSION: ${GIGACHAT_EMBEDDINGS_DIMENSION:-1024}
+      GIGACHAT_CA_BUNDLE: ${GIGACHAT_CA_BUNDLE:-}
+
+      # Поиск по близости (RAG, pgvector). Провайдер эмбеддингов свой:
+      # по умолчанию тот же, что у генерации, но индекс можно оставить
+      # на Яндексе, переведя генерацию на Сбер, — размерности у них разные,
+      # и смена провайдера индекса означает миграцию и переиндексацию.
+      VEDAL_RAG_ENABLED: ${VEDAL_RAG_ENABLED:-false}
+      VEDAL_RAG_PROVIDER: ${VEDAL_RAG_PROVIDER:-${VEDAL_LLM_PROVIDER:-yandex}}
+      VEDAL_RAG_DOCUMENT_MODEL_URI: ${VEDAL_RAG_DOCUMENT_MODEL_URI:-}
+      VEDAL_RAG_QUERY_MODEL_URI: ${VEDAL_RAG_QUERY_MODEL_URI:-}
+      VEDAL_RAG_MAX_DISTANCE: ${VEDAL_RAG_MAX_DISTANCE:-0.45}
+
       # Почта. Пустой адрес сервера — рабочее состояние, а не поломка: письма
       # пишутся в лог и наружу не уходят, так и живёт машина разработчика.
       # Портал отличает пустое значение от заданного сам (MailSenderConfig),
