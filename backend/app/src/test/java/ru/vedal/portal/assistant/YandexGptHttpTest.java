@@ -63,7 +63,7 @@ class YandexGptHttpTest {
     }
 
     /** Клиент, говорящий с поднятым здесь сервером. */
-    private YandexGpt client() {
+    private ChatModel client() {
         var here = URI.create("http://127.0.0.1:" + server.getAddress().getPort()
                 + "/foundationModels/v1/completion");
         return new YandexGptHttp(here, json, "test-api-key-ascii",
@@ -84,7 +84,7 @@ class YandexGptHttpTest {
 
         var chunks = new ArrayList<String>();
         var full = client().complete(
-                List.of(new YandexGpt.Message(YandexGpt.Role.USER, "что это")), chunks::add);
+                List.of(new ChatModel.Message(ChatModel.Role.USER, "что это")), chunks::add);
 
         assertThat(full).isEqualTo("Инкубатор VEDAL A-2000.");
         assertThat(chunks).containsExactly("Инкубатор", " VEDAL", " A-2000.");
@@ -99,7 +99,7 @@ class YandexGptHttpTest {
     void theKeyGoesWithItsOwnScheme() {
         answering(200, line("ответ"));
 
-        client().complete(List.of(new YandexGpt.Message(YandexGpt.Role.USER, "вопрос")), c -> { });
+        client().complete(List.of(new ChatModel.Message(ChatModel.Role.USER, "вопрос")), c -> { });
 
         assertThat(lastAuth.get()).isEqualTo("Api-Key test-api-key-ascii");
     }
@@ -110,8 +110,8 @@ class YandexGptHttpTest {
         answering(200, line("ответ"));
 
         client().complete(List.of(
-                new YandexGpt.Message(YandexGpt.Role.SYSTEM, "правила"),
-                new YandexGpt.Message(YandexGpt.Role.USER, "вопрос")), c -> { });
+                new ChatModel.Message(ChatModel.Role.SYSTEM, "правила"),
+                new ChatModel.Message(ChatModel.Role.USER, "вопрос")), c -> { });
 
         assertThat(lastBody.get())
                 .contains("gpt://каталог-1/yandexgpt-lite/latest")
@@ -127,7 +127,7 @@ class YandexGptHttpTest {
         answering(200, "{\"result\":{}}", "не json вовсе", line("Ответ."));
 
         var full = client().complete(
-                List.of(new YandexGpt.Message(YandexGpt.Role.USER, "вопрос")), c -> { });
+                List.of(new ChatModel.Message(ChatModel.Role.USER, "вопрос")), c -> { });
 
         assertThat(full).isEqualTo("Ответ.");
     }
@@ -139,7 +139,7 @@ class YandexGptHttpTest {
         answering(401, "{\"error\":\"unauthorized\"}");
 
         assertThatThrownBy(() -> client().complete(
-                List.of(new YandexGpt.Message(YandexGpt.Role.USER, "вопрос")), c -> { }))
+                List.of(new ChatModel.Message(ChatModel.Role.USER, "вопрос")), c -> { }))
                 .hasMessageContaining("401")
                 .hasMessageContaining("unauthorized");
     }
@@ -151,7 +151,7 @@ class YandexGptHttpTest {
         answering(200, "{\"result\":{\"alternatives\":[]}}");
 
         assertThatThrownBy(() -> client().complete(
-                List.of(new YandexGpt.Message(YandexGpt.Role.USER, "вопрос")), c -> { }))
+                List.of(new ChatModel.Message(ChatModel.Role.USER, "вопрос")), c -> { }))
                 .hasMessageContaining("пустой ответ");
     }
 }

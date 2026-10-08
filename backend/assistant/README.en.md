@@ -61,7 +61,14 @@ Two implementations stand behind the `LlmEngine` port, selected by the
 | Value | Who answers |
 | --- | --- |
 | `search` (default) | `DeterministicSearch` — a list of what was found, with links |
-| `yandexgpt` | `YandexGptEngine` — a model on top of that same search |
+| `model` (old `yandexgpt`) | `ModelEngine` — a model on top of that same search |
+
+Whose model — `vedal.assistant.provider` (`VEDAL_LLM_PROVIDER`): `yandex` —
+`YandexGptHttp` (default), `gigachat` — `GigaChatHttp` (Sber: a 30-minute
+OAuth token in `GigaChatAuth`, SSE stream, the Ministry root via
+`TrustedCertificates`). Both sit behind the `ChatModel` port, and `ModelEngine`
+does not know whom it talks to. Activation — `docs/operations/yandexgpt_activation.en.md`
+and `docs/operations/gigachat_activation.en.md`.
 
 **The model does not replace the search, it sits on top of it.** The portal
 finds the materials: it has the catalogue, the news and the documents with
@@ -81,9 +88,9 @@ an empty reply — the list of found materials is returned instead, the very one
 that existed before the model. The materials were found after all; making the
 visitor wait for a human because of someone else's downtime is pointless.
 
-**No key lives in the repository.** `VEDAL_YANDEX_API_KEY` and
-`VEDAL_YANDEXGPT_MODEL_URI` (the full model address, `gpt://folder/model`)
-come from the environment, and with `engine=yandexgpt`
+**No key lives in the repository.** `VEDAL_YANDEXGPT_API_KEY` and
+`VEDAL_YANDEXGPT_MODEL_URI` (the full model address, `gpt://folder/model`) —
+or `GIGACHAT_AUTH_KEY` for Sber — come from the environment, and with `engine=model`
 the portal will not start without them — deliberately: otherwise it would
 quietly answer with a list of links, and the substitution would only be
 noticeable by the answers becoming drier.
@@ -99,7 +106,7 @@ sits behind its own `Retrieval` port, with two implementations:
 | `VectorSearch` | by vector proximity in the pgvector index |
 
 Swapping the implementation touches neither the prompt, nor the numbering of
-sources, nor the conversation: `YandexGptEngine` receives a list of passages
+sources, nor the conversation: `ModelEngine` receives a list of passages
 and does not ask where they came from.
 
 **An empty index is a working state, not a placeholder.** VEDAL has no
@@ -156,7 +163,7 @@ becomes meaningful work once there is a corpus to measure it on.
 
 It is switched on by `vedal.assistant.rag.enabled` together with the pair of
 embedding model addresses. A half-configured setup fails the startup with a
-readable message — for the same reason `engine=yandexgpt` without a key does.
+readable message — for the same reason `engine=model` without a key does.
 
 The scripted replies stay as the fast path for buttons: «Запросить КП» has a
 known answer and does not need a model call.
