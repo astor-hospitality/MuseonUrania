@@ -81,6 +81,10 @@ services:
       CLOUDRU_MODEL: ${CLOUDRU_MODEL:-GigaChat/GigaChat-2-Max}
       CLOUDRU_EMBEDDINGS_MODEL: ${CLOUDRU_EMBEDDINGS_MODEL:-ai-sage/Giga-Embeddings-instruct-480M}
       CLOUDRU_EMBEDDINGS_DIMENSION: ${CLOUDRU_EMBEDDINGS_DIMENSION:-0}
+      # Распознавание речи: yandex (SpeechKit) | cloudru (Whisper, тот же ключ).
+      # Синтез — всегда SpeechKit.
+      VEDAL_STT_PROVIDER: ${VEDAL_STT_PROVIDER:-yandex}
+      CLOUDRU_STT_MODEL: ${CLOUDRU_STT_MODEL:-openai/whisper-large-v3}
 
       # Поиск по близости (RAG, pgvector). Выключен, пока у VEDAL нет корпуса
       # документов (issue #38): индексировать нечего, и каждый вопрос стоил бы

@@ -600,6 +600,14 @@ services:
       CLOUDRU_EMBEDDINGS_MODEL: ${CLOUDRU_EMBEDDINGS_MODEL:-ai-sage/Giga-Embeddings-instruct-480M}
       CLOUDRU_EMBEDDINGS_DIMENSION: ${CLOUDRU_EMBEDDINGS_DIMENSION:-0}
 
+      # Распознавание речи (голосовой ввод): yandex — SpeechKit
+      # (VEDAL_SPEECHKIT_API_KEY), cloudru — Whisper за той же дверью
+      # Cloud.ru и с тем же CLOUDRU_API_KEY. Настройка своя, отдельная
+      # от VEDAL_LLM_PROVIDER; умолчание — Яндекс. Синтез речи остаётся
+      # на SpeechKit при любом значении: у Cloud.ru модели синтеза нет.
+      VEDAL_STT_PROVIDER: ${VEDAL_STT_PROVIDER:-yandex}
+      CLOUDRU_STT_MODEL: ${CLOUDRU_STT_MODEL:-openai/whisper-large-v3}
+
       # Поиск по близости (RAG, pgvector). Провайдер эмбеддингов свой:
       # по умолчанию тот же, что у генерации, но индекс можно оставить
       # на Яндексе, переведя генерацию на Сбер или Cloud.ru, — размерности

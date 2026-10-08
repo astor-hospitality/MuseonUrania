@@ -158,6 +158,11 @@ services:
       VEDAL_RAG_QUERY_MODEL_URI: ${VEDAL_RAG_QUERY_MODEL_URI:-}
       VEDAL_RAG_MAX_DISTANCE: ${VEDAL_RAG_MAX_DISTANCE:-0.45}
       VEDAL_SPEECHKIT_API_KEY: ${VEDAL_SPEECHKIT_API_KEY:-}
+      # Распознавание речи: yandex (SpeechKit, ключ выше) | cloudru (Whisper
+      # за дверью Cloud.ru, CLOUDRU_API_KEY из базового compose.yaml).
+      # Синтез речи при любом значении остаётся на SpeechKit.
+      VEDAL_STT_PROVIDER: ${VEDAL_STT_PROVIDER:-yandex}
+      CLOUDRU_STT_MODEL: ${CLOUDRU_STT_MODEL:-openai/whisper-large-v3}
       VEDAL_CONVERSATION_DIGEST_ENABLED: ${VEDAL_CONVERSATION_DIGEST_ENABLED:-true}
       VEDAL_S3_REGION: ${VEDAL_S3_REGION:-ru-central1}
     ports: !override []
