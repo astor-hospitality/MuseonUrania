@@ -186,6 +186,64 @@ generation:
 Rolling the index back — the reverse migration (`vector(256)`) and
 re-indexing with Yandex.
 
+## Speech recognition (voice input) through Whisper
+
+Vedalina's voice input has two halves: recognition (the visitor's speech →
+text) and synthesis (the answer → audio). Recognition switches to Cloud.ru
+through the same door and with the same key as the model: `POST
+/v1/audio/transcriptions` in the OpenAI schema, model
+`openai/whisper-large-v3`. Synthesis stays on Yandex SpeechKit whatever the
+setting — Cloud.ru Foundation Models has no text-to-speech model today — so
+`VEDAL_SPEECHKIT_API_KEY` is still needed after the switch: without it the
+visitor can dictate but does not hear the answer, and `GET
+/api/assistant/v1/voice` reports `available: false`.
+
+The switch is its own, separate from `VEDAL_LLM_PROVIDER` — voice and model
+move at different times:
+
+```env
+VEDAL_STT_PROVIDER=cloudru                 # yandex — SpeechKit; the default is yandex
+CLOUDRU_API_KEY=<the same key as for the model>
+CLOUDRU_STT_MODEL=openai/whisper-large-v3  # default; another model — no rebuild
+# VEDAL_STT_LANGUAGE=ru                    # language hint for Whisper; empty — it decides itself
+# VEDAL_STT_TIMEOUT=PT30S                  # response wait, same as SpeechKit
+VEDAL_SPEECHKIT_API_KEY=<SpeechKit key>    # still needed for synthesis
+```
+
+The rules are the same as for the model: `cloudru` without `CLOUDRU_API_KEY`
+or with an empty `CLOUDRU_STT_MODEL` stops the startup with a message naming
+the variables; a typo in `VEDAL_STT_PROVIDER` is a refusal with the list of
+allowed values, not a silent fallback to Yandex. With `yandex` the Cloud.ru
+key is not needed, and an empty `VEDAL_SPEECHKIT_API_KEY`, as before, does not
+stop the startup — the voice is simply unavailable.
+
+The frontend sends the same 30 seconds of 16 kHz PCM16 as for SpeechKit; the
+portal wraps them into WAV and sends them as a file (`file`) together with
+`model`, `language` and `response_format=json`. The door's limit is 25 MB per
+file; 30 seconds of speech is under a megabyte. As with SpeechKit, neither
+audio, nor text, nor provider error bodies reach the log or storage.
+
+Switching — `VEDAL_STT_PROVIDER=cloudru` in `backend/.env` and the same
+`up -d`; the startup log says "Ведалина распознаёт речь моделью Cloud.ru
+openai/whisper-large-v3". To verify, dictate a question in Vedalina's chat on
+the site, or:
+
+```bash
+# 2 seconds of silence in the frontend's format: a 200 with an empty or nearly empty text
+head -c 64000 /dev/zero | curl -sS https://<domain>/api/assistant/v1/voice/recognize \
+  -H 'Content-Type: application/octet-stream' -H 'X-Voice-Consent: true' --data-binary @-
+```
+
+A `503 Голос временно недоступен` means no key; `502` means the Cloud.ru
+door did not answer 200 (the key, the model name against `/v1/models`, the
+plan's limit) — the reason deliberately does not reach the response, check
+the Cloud.ru console.
+
+Rollback — `VEDAL_STT_PROVIDER=yandex` (or remove the variable) and the same
+`up -d`; the Cloud.ru key need not be removed from `.env`. The rollback is
+independent of `VEDAL_LLM_PROVIDER`: the model can stay on Cloud.ru while
+the voice returns to SpeechKit, and vice versa.
+
 ## Limitations
 
 - The Cloud.ru embeddings dimension is neither hard-coded nor verified against
@@ -198,5 +256,7 @@ re-indexing with Yandex.
   expires, not the key.
 - The document corpus is the same as with Yandex (issue #38): changing the
   model adds no materials, it only changes the wording.
-- Voice input (SpeechKit) stays on Yandex — it is not part of the model and
-  is not affected by this switch.
+- Speech recognition switches separately (`VEDAL_STT_PROVIDER`, the section
+  above), while speech synthesis stays on Yandex SpeechKit: Cloud.ru
+  Foundation Models has no text-to-speech model, so `VEDAL_SPEECHKIT_API_KEY`
+  is still needed for voicing the answers after the move.
