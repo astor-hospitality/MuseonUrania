@@ -158,6 +158,15 @@ services:
       VEDAL_RAG_QUERY_MODEL_URI: ${VEDAL_RAG_QUERY_MODEL_URI:-}
       VEDAL_RAG_MAX_DISTANCE: ${VEDAL_RAG_MAX_DISTANCE:-0.45}
       VEDAL_SPEECHKIT_API_KEY: ${VEDAL_SPEECHKIT_API_KEY:-}
+      # Озвучивание: yandex (SpeechKit, ключ выше) или salute (SaluteSpeech
+      # Сбера, docs/operations/salutespeech_activation.md). Распознавание —
+      # по-прежнему SpeechKit.
+      VEDAL_TTS_PROVIDER: ${VEDAL_TTS_PROVIDER:-yandex}
+      SALUTE_AUTH_KEY: ${SALUTE_AUTH_KEY:-}
+      SALUTE_SCOPE: ${SALUTE_SCOPE:-SALUTE_SPEECH_PERS}
+      SALUTE_TTS_VOICE: ${SALUTE_TTS_VOICE:-Nec_24000}
+      SALUTE_TTS_FORMAT: ${SALUTE_TTS_FORMAT:-wav16}
+      SALUTE_CA_BUNDLE: ${SALUTE_CA_BUNDLE:-${GIGACHAT_CA_BUNDLE:-}}
       VEDAL_CONVERSATION_DIGEST_ENABLED: ${VEDAL_CONVERSATION_DIGEST_ENABLED:-true}
       VEDAL_S3_REGION: ${VEDAL_S3_REGION:-ru-central1}
     ports: !override []
