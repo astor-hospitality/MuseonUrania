@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>ВЕДАЛ — временные перебои в работе</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #12202a; background: #f4f8f6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: 24px; }
+    main { width: 100%; max-width: 700px; padding: clamp(24px, 5vw, 52px); background: #fff; border: 1px solid #dde5e2; border-radius: 16px; }
+    .brand { color: #0f7c30; font-size: 22px; font-weight: 750; letter-spacing: .16em; }
+    .date { color: #5e6b73; font-size: 14px; margin: 28px 0 12px; }
+    h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 0 0 20px; text-wrap: balance; }
+    p { font-size: 17px; line-height: 1.6; color: #3e4e55; margin: 0 0 16px; }
+    .contacts { display: flex; flex-wrap: wrap; gap: 12px 24px; border-top: 1px solid #dde5e2; margin-top: 28px; padding-top: 24px; }
+    a { color: #0f7c30; text-underline-offset: 4px; overflow-wrap: anywhere; }
+    a:focus-visible { outline: 2px solid #0f7c30; outline-offset: 5px; }
+    .status { display: inline-block; margin-top: 28px; font-size: 14px; }
+    @media (max-width: 420px) { body { padding: 12px; } .contacts { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <main aria-labelledby="notice-title">
+    <div class="brand">ВЕДАЛ</div>
+    <div class="date"><time datetime="2026-10-08">8 октября 2026</time></div>
+    <h1 id="notice-title">Временные перебои в работе Ведала</h1>
+    <p>Из-за аварии в Яндекс Cloud портал, онлайн-заявки и Ведалина могут быть недоступны.</p>
+    <p>Команда работает над восстановлением. По вопросам продукции, заказов и сервиса свяжитесь с нами по телефону или электронной почте.</p>
+    <div class="contacts">
+      <a href="tel:88006003449">8 800 600 3449</a>
+      <a href="mailto:sales@vedal-med.ru">sales@vedal-med.ru</a>
+    </div>
+    <a class="status" href="https://status.yandex.cloud/ru/incidents/2092" target="_blank" rel="noopener noreferrer">Статус восстановления Яндекс Cloud ↗</a>
+  </main>
+</body>
+</html>
