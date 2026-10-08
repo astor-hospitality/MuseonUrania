@@ -74,6 +74,23 @@ public class AssistantConfig {
     }
 
     /**
+     * Настройки Cloud.ru — тем же образом, что и Сбера. Проверяются
+     * в {@link CloudRuSettings#chat} и {@link CloudRuSettings#embeddings},
+     * то есть только при выбранном провайдере {@code cloudru}.
+     */
+    @Bean
+    CloudRuSettings cloudRuSettings(
+            @Value("${vedal.assistant.cloudru.api-key:}") String apiKey,
+            @Value("${vedal.assistant.cloudru.base-url:" + CloudRuSettings.CLOUD_API + "}") String baseUrl,
+            @Value("${vedal.assistant.cloudru.model:" + CloudRuSettings.DEFAULT_MODEL + "}") String model,
+            @Value("${vedal.assistant.cloudru.embeddings-model:" + CloudRuSettings.DEFAULT_EMBEDDINGS_MODEL + "}")
+            String embeddingsModel,
+            @Value("${vedal.assistant.cloudru.embeddings-dimension:" + CloudRuEmbeddings.DETECT + "}")
+            int embeddingsDimension) {
+        return new CloudRuSettings(apiKey, baseUrl, model, embeddingsModel, embeddingsDimension);
+    }
+
+    /**
      * Обменник ключа Сбера на токен — один на генерацию и эмбеддинги.
      *
      * <p>{@code @Lazy} обязателен: бин создаётся только тогда, когда его
@@ -104,7 +121,8 @@ public class AssistantConfig {
      * <p><b>Режим и провайдер — две разные настройки.</b> {@code engine}
      * говорит, отвечает ли модель вообще ({@code model}; старое значение
      * {@code yandexgpt} принимается как то же самое), {@code provider} —
-     * чья именно: {@code yandex} (YandexGPT) или {@code gigachat} (Sber).
+     * чья именно: {@code yandex} (YandexGPT), {@code gigachat} (Sber)
+     * или {@code cloudru} (Cloud.ru Foundation Models).
      * Провайдер по умолчанию — Яндекс: так стенд, где переменная не задана,
      * после обновления отвечает тем же, чем отвечал.
      *
@@ -124,6 +142,7 @@ public class AssistantConfig {
             PublicDocuments documents,
             GigaChatSettings gigachat,
             ObjectProvider<GigaChatAuth> gigachatAuth,
+            CloudRuSettings cloudru,
             @Value("${vedal.assistant.engine:search}") String engine,
             @Value("${vedal.assistant.provider:" + YANDEX + "}") String provider,
             @Value("${vedal.assistant.yandex.api-key:}") String apiKey,
@@ -146,6 +165,10 @@ public class AssistantConfig {
                 log.info("Ведалина отвечает моделью GigaChat {}", gigachat.model());
                 yield new GigaChatHttp(gigachatAuth.getObject(), gigachat.completionsUrl(), json,
                         gigachat.model(), temperature, maxTokens, timeout);
+            }
+            case CloudRuSettings.PROVIDER -> {
+                log.info("Ведалина отвечает моделью Cloud.ru {}", cloudru.model());
+                yield cloudru.chat(json, temperature, maxTokens, timeout);
             }
             default -> throw new IllegalStateException("провайдер " + provider);
         };
@@ -190,10 +213,13 @@ public class AssistantConfig {
      */
     static String providerOf(String provider) {
         var name = provider == null ? "" : provider.strip().toLowerCase(java.util.Locale.ROOT);
-        if (name.equals(YANDEX) || name.equals(GigaChatSettings.PROVIDER)) return name;
+        if (name.equals(YANDEX) || name.equals(GigaChatSettings.PROVIDER)
+                || name.equals(CloudRuSettings.PROVIDER)) {
+            return name;
+        }
         throw new IllegalStateException(
                 "Неизвестный провайдер модели «" + provider + "». VEDAL_LLM_PROVIDER "
-                        + "(и VEDAL_RAG_PROVIDER) принимают yandex или gigachat.");
+                        + "(и VEDAL_RAG_PROVIDER) принимают yandex, gigachat или cloudru.");
     }
 
     private static ChatModel yandexGpt(ObjectMapper json, String apiKey, String modelUri,
@@ -210,7 +236,8 @@ public class AssistantConfig {
                     модели целиком, вида gpt://<каталог>/yandexgpt-lite/latest. \
                     Без них ассистент отвечать не сможет; чтобы работать без \
                     модели, поставьте vedal.assistant.engine=search, чтобы \
-                    отвечать через Сбер — VEDAL_LLM_PROVIDER=gigachat.""");
+                    отвечать через Сбер — VEDAL_LLM_PROVIDER=gigachat, через \
+                    Cloud.ru — VEDAL_LLM_PROVIDER=cloudru.""");
         }
 
         // Адрес модели проверяется здесь, а не в облаке: без схемы gpt://
@@ -261,7 +288,8 @@ public class AssistantConfig {
      * <p>Ключ Яндекса тот же, что у YandexGPT: эмбеддинги живут в том же
      * Foundation Models и оплачиваются тем же сервисным аккаунтом. Второй
      * переменной под тот же ключ здесь нет — это был бы второй способ
-     * ошибиться. У Сбера так же: один GIGACHAT_AUTH_KEY на всё.
+     * ошибиться. У Сбера так же: один GIGACHAT_AUTH_KEY на всё; у Cloud.ru —
+     * один CLOUDRU_API_KEY.
      */
     @Bean
     @ConditionalOnProperty(name = "vedal.assistant.rag.enabled", havingValue = "true")
@@ -269,6 +297,7 @@ public class AssistantConfig {
             ObjectMapper json,
             GigaChatSettings gigachat,
             ObjectProvider<GigaChatAuth> gigachatAuth,
+            CloudRuSettings cloudru,
             @Value("${vedal.assistant.rag.provider:${vedal.assistant.provider:" + YANDEX + "}}") String provider,
             @Value("${vedal.assistant.yandex.api-key:}") String apiKey,
             @Value("${vedal.assistant.rag.document-model-uri:}") String documentModelUri,
@@ -281,6 +310,14 @@ public class AssistantConfig {
                     gigachat.embeddingsModel(), gigachat.embeddingsDimension());
             return new GigaChatEmbeddings(gigachatAuth.getObject(), gigachat.embeddingsUrl(), json,
                     gigachat.embeddingsModel(), gigachat.embeddingsDimension(), timeout);
+        }
+
+        if (providerOf(provider).equals(CloudRuSettings.PROVIDER)) {
+            log.info("Индекс Ведалины считается моделью Cloud.ru {} (размерность {})",
+                    cloudru.embeddingsModel(),
+                    cloudru.embeddingsDimension() == CloudRuEmbeddings.DETECT
+                            ? "по первому ответу" : cloudru.embeddingsDimension());
+            return cloudru.embeddings(json, timeout);
         }
 
         if (apiKey.isBlank() || documentModelUri.isBlank() || queryModelUri.isBlank()) {

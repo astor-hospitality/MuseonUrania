@@ -12,9 +12,10 @@ import java.util.function.Consumer;
  * в {@link ModelEngine} и проверяются подставным собеседником; сам HTTP
  * проверяется отдельно, поднятым на месте сервером.
  *
- * <p><b>Второе назначение — сменяемость провайдера.</b> Реализаций две:
- * {@link YandexGptHttp} (Yandex Foundation Models) и {@link GigaChatHttp}
- * (Sber GigaChat). У каждой свои поля запроса, свой адрес и своя схема
+ * <p><b>Второе назначение — сменяемость провайдера.</b> Реализаций три:
+ * {@link YandexGptHttp} (Yandex Foundation Models), {@link GigaChatHttp}
+ * (Sber GigaChat) и {@link CloudRuHttp} (Cloud.ru Foundation Models).
+ * У каждой свои поля запроса, свой адрес и своя схема
  * авторизации, но «отправить реплики и получить текст» — одно и то же,
  * и {@link ModelEngine} не знает, с кем именно говорит. Кто из них
  * отвечает, выбирает настройка {@code vedal.assistant.provider}

@@ -26,6 +26,11 @@ class ProviderSettingsTest {
                 GigaChatEmbeddings.DEFAULT_DIMENSION, GigaChatAuth.CLOUD_URL, GigaChatHttp.CLOUD_API, "");
     }
 
+    private static CloudRuSettings cloudru(String apiKey) {
+        return new CloudRuSettings(apiKey, CloudRuSettings.CLOUD_API, CloudRuSettings.DEFAULT_MODEL,
+                CloudRuSettings.DEFAULT_EMBEDDINGS_MODEL, CloudRuEmbeddings.DETECT);
+    }
+
     private static ObjectProvider<GigaChatAuth> authOf(GigaChatSettings settings) {
         var beans = new DefaultListableBeanFactory();
         beans.registerSingleton("gigaChatAuth",
@@ -35,9 +40,15 @@ class ProviderSettingsTest {
 
     private static LlmEngine engine(String engine, String provider, GigaChatSettings sber,
                                     ObjectProvider<GigaChatAuth> auth, String yandexKey, String yandexModel) {
+        return engine(engine, provider, sber, auth, cloudru(""), yandexKey, yandexModel);
+    }
+
+    private static LlmEngine engine(String engine, String provider, GigaChatSettings sber,
+                                    ObjectProvider<GigaChatAuth> auth, CloudRuSettings cloudru,
+                                    String yandexKey, String yandexModel) {
         var none = new DefaultListableBeanFactory().getBeanProvider(VectorSearch.class);
         return new AssistantConfig().llmEngine(null, none, null, JSON, PublicDocuments.HIDDEN,
-                sber, auth, engine, provider, yandexKey, yandexModel, YandexGptHttp.CLOUD_URL,
+                sber, auth, cloudru, engine, provider, yandexKey, yandexModel, YandexGptHttp.CLOUD_URL,
                 true, 0.2, 600, Duration.ofSeconds(25));
     }
 
@@ -60,12 +71,39 @@ class ProviderSettingsTest {
                 .isInstanceOf(ModelEngine.class);
     }
 
+    // Третий провайдер — той же настройкой; ключи Яндекса и Сбера ему не нужны.
+    @Test
+    void cloudRuIsChosenByTheProviderSettingWithoutOtherKeys() {
+        var engine = engine("model", "CloudRu", sber(""), authOf(sber("x")),
+                cloudru("test-cloudru-key"), "", "");
+
+        assertThat(engine).isInstanceOf(ModelEngine.class);
+    }
+
+    // Без ключа Cloud.ru провайдер cloudru не поднимается — и говорит, где взять ключ.
+    @Test
+    void cloudRuWithoutAKeyStopsTheStartupAndNamesTheVariable() {
+        assertThatThrownBy(() -> engine("model", "cloudru", sber(""), authOf(sber("x")),
+                cloudru(""), "", ""))
+                .hasMessageContaining("CLOUDRU_API_KEY")
+                .hasMessageContaining("Foundation Models");
+    }
+
+    @Test
+    void aCloudRuKeyWithStrayCharactersIsRefused() {
+        assertThatThrownBy(() -> engine("model", "cloudru", sber(""), authOf(sber("x")),
+                cloudru("ключ с кириллицей"), "", ""))
+                .hasMessageContaining("CLOUDRU_API_KEY")
+                .hasMessageContaining("не-ASCII");
+    }
+
     // Опечатка — отказ, а не тихий откат к Яндексу.
     @Test
     void anUnknownProviderStopsTheStartup() {
         assertThatThrownBy(() -> engine("model", "sber", sber(""), authOf(sber("x")), "k", "gpt://a/b"))
                 .hasMessageContaining("sber")
-                .hasMessageContaining("VEDAL_LLM_PROVIDER");
+                .hasMessageContaining("VEDAL_LLM_PROVIDER")
+                .hasMessageContaining("cloudru");
     }
 
     // Без ключа Сбера провайдер gigachat не поднимается — и говорит, где взять ключ.
@@ -99,7 +137,7 @@ class ProviderSettingsTest {
         var search = new DeterministicSearchStub();
         var engine = new AssistantConfig().llmEngine(search, none, null, JSON, PublicDocuments.HIDDEN,
                 sber(""), new DefaultListableBeanFactory().getBeanProvider(GigaChatAuth.class),
-                "deterministic", "опечатка", "", "", YandexGptHttp.CLOUD_URL, true, 0.2, 600,
+                cloudru(""), "deterministic", "опечатка", "", "", YandexGptHttp.CLOUD_URL, true, 0.2, 600,
                 Duration.ofSeconds(25));
 
         assertThat(engine).isSameAs(search);

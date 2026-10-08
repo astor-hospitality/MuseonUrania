@@ -112,32 +112,23 @@ public class GigaChatEmbeddings implements Embeddings {
     }
 
     private float[] parse(String body) {
-        var data = json.readTree(body).path("data");
-        var node = data.isArray() && !data.isEmpty() ? data.get(0).path("embedding") : data.path("embedding");
-        if (!node.isArray() || node.isEmpty()) {
-            throw new IllegalStateException("Ответ эмбеддингов без вектора: " + head(body));
-        }
+        var vector = OpenAiChat.embedding(json, body);
 
         // Та же проверка, что у YandexEmbeddings, и по той же причине:
         // вектор другой длины не влезет в колонку, и отказ должен приехать
         // отсюда, с внятным текстом, а не из базы сообщением про SQL.
-        if (node.size() != dimension) {
+        if (vector.length != dimension) {
             throw new IllegalStateException(
-                    "Модель " + model + " вернула вектор длины " + node.size()
+                    "Модель " + model + " вернула вектор длины " + vector.length
                             + ", а индекс рассчитан на " + dimension + ". Размерность прошита "
                             + "в колонке knowledge_chunk.embedding: смена модели эмбеддингов — это "
                             + "отдельная миграция и полная переиндексация корпуса "
                             + "(GIGACHAT_EMBEDDINGS_DIMENSION и docs/operations/gigachat_activation.md).");
         }
-
-        var vector = new float[node.size()];
-        for (var at = 0; at < vector.length; at++) {
-            vector[at] = (float) node.get(at).asDouble();
-        }
         return vector;
     }
 
     private static String head(String body) {
-        return body == null ? "" : body.length() <= 400 ? body : body.substring(0, 400);
+        return OpenAiChat.head(body);
     }
 }

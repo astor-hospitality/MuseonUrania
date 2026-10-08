@@ -63,7 +63,8 @@ final class KnowledgeStore {
                         + embeddings.dimension() + ", а колонка knowledge_chunk.embedding создана как vector("
                         + column + "). Смена провайдера эмбеддингов — это миграция колонки под новую "
                         + "размерность и полная переиндексация корпуса; порядок — в "
-                        + "docs/operations/gigachat_activation.md (раздел «Переиндексация»). "
+                        + "docs/operations/gigachat_activation.md или cloudru_models_activation.md "
+                        + "(раздел «Переиндексация»). "
                         + "Чтобы не менять индекс, оставьте VEDAL_RAG_PROVIDER=yandex или "
                         + "выключите RAG: VEDAL_RAG_ENABLED=false.");
     }

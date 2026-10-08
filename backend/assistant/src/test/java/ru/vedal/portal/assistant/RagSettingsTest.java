@@ -27,6 +27,13 @@ class RagSettingsTest {
     }
 
     private static Embeddings embeddings(String provider, String apiKey, String document, String query) {
+        return embeddings(provider, apiKey, document, query,
+                new CloudRuSettings("test-cloudru-key", CloudRuSettings.CLOUD_API, CloudRuSettings.DEFAULT_MODEL,
+                        CloudRuSettings.DEFAULT_EMBEDDINGS_MODEL, CloudRuEmbeddings.DETECT));
+    }
+
+    private static Embeddings embeddings(String provider, String apiKey, String document, String query,
+                                         CloudRuSettings cloudru) {
         var config = new AssistantConfig();
         var sber = new GigaChatSettings("dGVzdDpzZWNyZXQ=", "", "", "GIGACHAT_API_PERS", "GigaChat",
                 "Embeddings", GigaChatEmbeddings.DEFAULT_DIMENSION, GigaChatAuth.CLOUD_URL,
@@ -34,7 +41,7 @@ class RagSettingsTest {
         var beans = new DefaultListableBeanFactory();
         beans.registerSingleton("gigaChatAuth", config.gigaChatAuth(sber, new ObjectMapper(), Duration.ofSeconds(5)));
         return config.embeddings(new ObjectMapper(), sber, beans.getBeanProvider(GigaChatAuth.class),
-                provider, apiKey, document, query, YandexEmbeddings.CLOUD_URL, Duration.ofSeconds(15));
+                cloudru, provider, apiKey, document, query, YandexEmbeddings.CLOUD_URL, Duration.ofSeconds(15));
     }
 
     @Test
@@ -80,12 +87,34 @@ class RagSettingsTest {
         assertThat(configured.name()).isEqualTo("gigachat/Embeddings");
     }
 
+    // Cloud.ru — тоже одна модель и один ключ; размерность по умолчанию
+    // не постулируется, а узнаётся по первому ответу.
+    @Test
+    void cloudRuNeedsNoYandexModelPairAndKeepsTheDeclaredDimension() {
+        var configured = embeddings("cloudru", "", "", "",
+                new CloudRuSettings("test-cloudru-key", CloudRuSettings.CLOUD_API, CloudRuSettings.DEFAULT_MODEL,
+                        CloudRuSettings.DEFAULT_EMBEDDINGS_MODEL, 2048));
+
+        assertThat(configured).isInstanceOf(CloudRuEmbeddings.class);
+        assertThat(configured.dimension()).isEqualTo(2048);
+        assertThat(configured.name()).isEqualTo("cloudru/" + CloudRuSettings.DEFAULT_EMBEDDINGS_MODEL);
+    }
+
+    @Test
+    void cloudRuWithoutAKeyIsRefusedByName() {
+        assertThatThrownBy(() -> embeddings("cloudru", "", "", "",
+                new CloudRuSettings("", CloudRuSettings.CLOUD_API, CloudRuSettings.DEFAULT_MODEL,
+                        CloudRuSettings.DEFAULT_EMBEDDINGS_MODEL, CloudRuEmbeddings.DETECT)))
+                .hasMessageContaining("CLOUDRU_API_KEY");
+    }
+
     // Опечатка в провайдере — отказ на старте, а не тихий откат к Яндексу.
     @Test
     void anUnknownProviderIsRefusedByName() {
         assertThatThrownBy(() -> embeddings("sber", "", "", ""))
                 .hasMessageContaining("sber")
                 .hasMessageContaining("yandex")
-                .hasMessageContaining("gigachat");
+                .hasMessageContaining("gigachat")
+                .hasMessageContaining("cloudru");
     }
 }
