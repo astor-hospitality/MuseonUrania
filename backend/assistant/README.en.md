@@ -61,7 +61,19 @@ Two implementations stand behind the `LlmEngine` port, selected by the
 | Value | Who answers |
 | --- | --- |
 | `search` (default) | `DeterministicSearch` — a list of what was found, with links |
-| `yandexgpt` | `YandexGptEngine` — a model on top of that same search |
+| `model` (old `yandexgpt`) | `ModelEngine` — a model on top of that same search |
+
+Whose model — `vedal.assistant.provider` (`VEDAL_LLM_PROVIDER`): `yandex` —
+`YandexGptHttp` (default), `gigachat` — `GigaChatHttp` (Sber: a 30-minute
+OAuth token in `GigaChatAuth`, SSE stream, the Ministry root via
+`TrustedCertificates`), `cloudru` — `CloudRuHttp` (Cloud.ru Evolution
+Foundation Models: the same GigaChat models behind an OpenAI-compatible
+endpoint, a static key, no OAuth and no certificate; the request body and SSE
+parsing are shared with Sber — `OpenAiChat`). All three sit behind the
+`ChatModel` port, and `ModelEngine` does not know whom it talks to.
+Activation — `docs/operations/yandexgpt_activation.en.md`,
+`docs/operations/gigachat_activation.en.md` and
+`docs/operations/cloudru_models_activation.en.md`.
 
 **The model does not replace the search, it sits on top of it.** The portal
 finds the materials: it has the catalogue, the news and the documents with
@@ -81,9 +93,10 @@ an empty reply — the list of found materials is returned instead, the very one
 that existed before the model. The materials were found after all; making the
 visitor wait for a human because of someone else's downtime is pointless.
 
-**No key lives in the repository.** `VEDAL_YANDEX_API_KEY` and
-`VEDAL_YANDEXGPT_MODEL_URI` (the full model address, `gpt://folder/model`)
-come from the environment, and with `engine=yandexgpt`
+**No key lives in the repository.** `VEDAL_YANDEXGPT_API_KEY` and
+`VEDAL_YANDEXGPT_MODEL_URI` (the full model address, `gpt://folder/model`) —
+or `GIGACHAT_AUTH_KEY` for Sber, `CLOUDRU_API_KEY` for Cloud.ru — come from
+the environment, and with `engine=model`
 the portal will not start without them — deliberately: otherwise it would
 quietly answer with a list of links, and the substitution would only be
 noticeable by the answers becoming drier.
@@ -99,7 +112,7 @@ sits behind its own `Retrieval` port, with two implementations:
 | `VectorSearch` | by vector proximity in the pgvector index |
 
 Swapping the implementation touches neither the prompt, nor the numbering of
-sources, nor the conversation: `YandexGptEngine` receives a list of passages
+sources, nor the conversation: `ModelEngine` receives a list of passages
 and does not ask where they came from.
 
 **An empty index is a working state, not a placeholder.** VEDAL has no
@@ -123,8 +136,12 @@ becomes meaningful work once there is a corpus to measure it on.
 - the `knowledge_source` / `knowledge_chunk` schema and the `vector` extension
   (migration `V34`); the database image is `pgvector/pgvector:pg16`;
 - chunking with overlap (`Chunks`);
-- the `Embeddings` port and its `YandexEmbeddings` implementation — the
-  `text-search-doc` / `text-search-query` pair, a vector of 256 numbers;
+- the `Embeddings` port and its implementations `YandexEmbeddings`,
+  `GigaChatEmbeddings` and `CloudRuEmbeddings` (provider — `VEDAL_RAG_PROVIDER`;
+  dimensions differ, and `KnowledgeStore` checks the model against the column
+  at startup; with Cloud.ru the dimension is learned from the model's first
+  answer) — Yandex uses the `text-search-doc` / `text-search-query` pair,
+  a vector of 256 numbers;
 - indexing with a checksum: unchanged material costs not a single model call
   (`KnowledgeIndex`);
 - similarity search with a threshold and the `PUBLIC` / `STAFF` scopes
@@ -156,7 +173,7 @@ becomes meaningful work once there is a corpus to measure it on.
 
 It is switched on by `vedal.assistant.rag.enabled` together with the pair of
 embedding model addresses. A half-configured setup fails the startup with a
-readable message — for the same reason `engine=yandexgpt` without a key does.
+readable message — for the same reason `engine=model` without a key does.
 
 The scripted replies stay as the fast path for buttons: «Запросить КП» has a
 known answer and does not need a model call.

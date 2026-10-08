@@ -35,10 +35,14 @@ import java.util.stream.IntStream;
  * <p>Ограничения Ведалины (без цен, без диагнозов, без сроков) стоят
  * до этого места, в {@link Guardrails}: вопрос, который они отклоняют,
  * до модели не доходит и денег не стоит.
+ *
+ * <p><b>Провайдер модели этому классу безразличен.</b> YandexGPT или
+ * GigaChat — он говорит через {@link ChatModel} и одинаково обращается
+ * с любым ответом; кто именно отвечает, решает {@link AssistantConfig}.
  */
-public class YandexGptEngine implements LlmEngine {
+public class ModelEngine implements LlmEngine {
 
-    private static final Logger log = LoggerFactory.getLogger(YandexGptEngine.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelEngine.class);
 
     /**
      * Правила для модели.
@@ -101,11 +105,11 @@ public class YandexGptEngine implements LlmEngine {
             содержащего эту таблицу, а не номер общей карточки изделия.""";
 
     private final Retrieval search;
-    private final YandexGpt model;
+    private final ChatModel model;
     private final boolean fallback;
     private final PublicDocuments documents;
 
-    public YandexGptEngine(Retrieval search, YandexGpt model, boolean fallback,
+    public ModelEngine(Retrieval search, ChatModel model, boolean fallback,
                            PublicDocuments documents) {
         this.search = search;
         this.model = model;
@@ -148,9 +152,9 @@ public class YandexGptEngine implements LlmEngine {
             onStage.accept("composing");
             var rules = RULES.formatted(documents.hiddenFrom(scope) ? "" : PDF_RULE);
             var text = model.complete(List.of(
-                    new YandexGpt.Message(YandexGpt.Role.SYSTEM,
+                    new ChatModel.Message(ChatModel.Role.SYSTEM,
                             rules + conversation(context) + "\n\n" + materials(found)),
-                    new YandexGpt.Message(YandexGpt.Role.USER, question)), onChunk);
+                    new ChatModel.Message(ChatModel.Role.USER, question)), onChunk);
 
             return Optional.of(new Grounded(text.strip(), sources));
 
@@ -163,11 +167,11 @@ public class YandexGptEngine implements LlmEngine {
             // ответом, пустой Optional отправит разговор к специалисту —
             // тем же путём, что и вопрос без источников.
             if (!fallback) {
-                log.warn("YandexGPT не ответил, разговор уходит человеку: {}", e.toString());
+                log.warn("Модель не ответила, разговор уходит человеку: {}", e.toString());
                 return Optional.empty();
             }
 
-            log.warn("YandexGPT не ответил, отдаю перечень найденного: {}", e.toString());
+            log.warn("Модель не ответила, отдаю перечень найденного: {}", e.toString());
             // Перечень собирается из УЖЕ найденного, а не вторым поиском.
             // Второй поиск стоил бы ещё одного прохода — а с векторным
             // поиском ещё и второго вызова эмбеддингов, — и мог бы вернуть

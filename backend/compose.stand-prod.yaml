@@ -52,13 +52,35 @@ services:
       VEDAL_S3_SECRET_KEY: ${VEDAL_S3_SECRET_KEY:?set VEDAL_S3_SECRET_KEY}
       VEDAL_SPEECHKIT_API_KEY: ${VEDAL_SPEECHKIT_API_KEY:-}
       VEDAL_CONVERSATION_DIGEST_ENABLED: ${VEDAL_CONVERSATION_DIGEST_ENABLED:-true}
+      # Ведалина: engine — отвечает ли модель (deterministic | model; старое
+      # yandexgpt = model), VEDAL_LLM_PROVIDER — чья модель: yandex | gigachat | cloudru.
       VEDAL_ASSISTANT_ENGINE: ${VEDAL_ASSISTANT_ENGINE:-deterministic}
+      VEDAL_LLM_PROVIDER: ${VEDAL_LLM_PROVIDER:-yandex}
+      VEDAL_LLM_FALLBACK: ${VEDAL_LLM_FALLBACK:-${VEDAL_YANDEXGPT_FALLBACK:-true}}
+      VEDAL_LLM_TEMPERATURE: ${VEDAL_LLM_TEMPERATURE:-${VEDAL_YANDEXGPT_TEMPERATURE:-0.2}}
+      VEDAL_LLM_MAX_TOKENS: ${VEDAL_LLM_MAX_TOKENS:-${VEDAL_YANDEXGPT_MAX_TOKENS:-600}}
+
+      # Провайдер yandex.
       VEDAL_YANDEXGPT_ENDPOINT: ${VEDAL_YANDEXGPT_ENDPOINT:-https://llm.api.cloud.yandex.net/foundationModels/v1/completion}
       VEDAL_YANDEXGPT_MODEL_URI: ${VEDAL_YANDEXGPT_MODEL_URI:-}
       VEDAL_YANDEXGPT_API_KEY: ${VEDAL_YANDEXGPT_API_KEY:-}
-      VEDAL_YANDEXGPT_TEMPERATURE: ${VEDAL_YANDEXGPT_TEMPERATURE:-0.2}
-      VEDAL_YANDEXGPT_MAX_TOKENS: ${VEDAL_YANDEXGPT_MAX_TOKENS:-600}
-      VEDAL_YANDEXGPT_FALLBACK: ${VEDAL_YANDEXGPT_FALLBACK:-true}
+
+      # Провайдер gigachat (Сбер): docs/operations/gigachat_activation.md.
+      GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY:-}
+      GIGACHAT_CLIENT_ID: ${GIGACHAT_CLIENT_ID:-}
+      GIGACHAT_CLIENT_SECRET: ${GIGACHAT_CLIENT_SECRET:-}
+      GIGACHAT_SCOPE: ${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}
+      GIGACHAT_MODEL: ${GIGACHAT_MODEL:-GigaChat}
+      GIGACHAT_EMBEDDINGS_MODEL: ${GIGACHAT_EMBEDDINGS_MODEL:-Embeddings}
+      GIGACHAT_EMBEDDINGS_DIMENSION: ${GIGACHAT_EMBEDDINGS_DIMENSION:-1024}
+      GIGACHAT_CA_BUNDLE: ${GIGACHAT_CA_BUNDLE:-}
+
+      # Провайдер cloudru (Cloud.ru Foundation Models): docs/operations/cloudru_models_activation.md.
+      CLOUDRU_API_KEY: ${CLOUDRU_API_KEY:-}
+      CLOUDRU_BASE_URL: ${CLOUDRU_BASE_URL:-https://foundation-models.api.cloud.ru/v1}
+      CLOUDRU_MODEL: ${CLOUDRU_MODEL:-GigaChat/GigaChat-2-Max}
+      CLOUDRU_EMBEDDINGS_MODEL: ${CLOUDRU_EMBEDDINGS_MODEL:-ai-sage/Giga-Embeddings-instruct-480M}
+      CLOUDRU_EMBEDDINGS_DIMENSION: ${CLOUDRU_EMBEDDINGS_DIMENSION:-0}
 
       # Поиск по близости (RAG, pgvector). Выключен, пока у VEDAL нет корпуса
       # документов (issue #38): индексировать нечего, и каждый вопрос стоил бы
@@ -66,9 +88,13 @@ services:
       #
       # Включённый RAG не заменяет поиск по словам, а встаёт перед ним, поэтому
       # включать его можно и до корпуса: пустой индекс ничего не находит,
-      # и отвечает прежний поиск. Ключ — тот же VEDAL_YANDEXGPT_API_KEY,
-      # моделей две: документная и вопросная.
+      # и отвечает прежний поиск. Ключ — тот же, что у генерации выбранного
+      # провайдера; у Яндекса моделей две (документная и вопросная), у Сбера
+      # и Cloud.ru одна. Провайдер индекса свой: смена означает миграцию колонки
+      # и переиндексацию, поэтому по умолчанию он наследует VEDAL_LLM_PROVIDER,
+      # но его можно оставить на Яндексе отдельно.
       VEDAL_RAG_ENABLED: ${VEDAL_RAG_ENABLED:-false}
+      VEDAL_RAG_PROVIDER: ${VEDAL_RAG_PROVIDER:-${VEDAL_LLM_PROVIDER:-yandex}}
       VEDAL_RAG_DOCUMENT_MODEL_URI: ${VEDAL_RAG_DOCUMENT_MODEL_URI:-}
       VEDAL_RAG_QUERY_MODEL_URI: ${VEDAL_RAG_QUERY_MODEL_URI:-}
       VEDAL_RAG_MAX_DISTANCE: ${VEDAL_RAG_MAX_DISTANCE:-0.45}

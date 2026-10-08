@@ -4,8 +4,13 @@
 
 ## Что уже делает код
 
-`VEDAL_ASSISTANT_ENGINE=yandexgpt` включает YandexGPT как слой формулировки ответа
-поверх локального безопасного поиска. Сначала `DeterministicSearch` выбирает
+`VEDAL_ASSISTANT_ENGINE=model` с провайдером `VEDAL_LLM_PROVIDER=yandex`
+(умолчание; старое значение `VEDAL_ASSISTANT_ENGINE=yandexgpt` принимается
+по-прежнему) включает YandexGPT как слой формулировки ответа поверх локального
+безопасного поиска. Второй провайдер — GigaChat Сбера, третий — Cloud.ru
+Foundation Models; переключаются той же переменной:
+[gigachat_activation.md](gigachat_activation.md),
+[cloudru_models_activation.md](cloudru_models_activation.md). Сначала `DeterministicSearch` выбирает
 только разрешённые источники для текущего контура, потом модель получает уже
 подготовленный `APPROVED_CONTEXT`.
 
@@ -15,13 +20,18 @@
 ## Переменные окружения
 
 ```env
-VEDAL_ASSISTANT_ENGINE=yandexgpt
+VEDAL_ASSISTANT_ENGINE=model
+VEDAL_LLM_PROVIDER=yandex
 VEDAL_YANDEXGPT_MODEL_URI=gpt://<folder_id>/yandexgpt/latest
 VEDAL_YANDEXGPT_API_KEY=<api-key сервисного аккаунта>
-VEDAL_YANDEXGPT_TEMPERATURE=0.2
-VEDAL_YANDEXGPT_MAX_TOKENS=600
-VEDAL_YANDEXGPT_FALLBACK=true
+VEDAL_LLM_TEMPERATURE=0.2
+VEDAL_LLM_MAX_TOKENS=600
+VEDAL_LLM_FALLBACK=true
 ```
+
+Температура, предел токенов и поведение при молчании модели общие для обоих
+провайдеров; старые имена `VEDAL_YANDEXGPT_TEMPERATURE`, `_MAX_TOKENS`,
+`_FALLBACK` принимаются по-прежнему.
 
 Ключ не хранить в Jira, GitHub, почте и репозитории. Передавать только
 защищённым каналом и класть в `backend/.env` на ВМ или в секреты CI.
@@ -48,9 +58,14 @@ curl -sS http://51.250.31.97:18080/api/assistant/v1/ask \
 
 ```env
 VEDAL_RAG_ENABLED=true
+VEDAL_RAG_PROVIDER=yandex
 VEDAL_RAG_DOCUMENT_MODEL_URI=emb://<folder_id>/text-search-doc/latest
 VEDAL_RAG_QUERY_MODEL_URI=emb://<folder_id>/text-search-query/latest
 ```
+
+`VEDAL_RAG_PROVIDER` по умолчанию наследует `VEDAL_LLM_PROVIDER`; при переводе
+генерации на GigaChat индекс можно оставить на Яндексе, задав его явно —
+размерность колонки в базе рассчитана на модели Яндекса.
 
 Включать можно и до корпуса: пустой индекс ничего не находит, и ассистент
 отвечает прежним поиском по словам. Смысла в этом, впрочем, пока немного —

@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  * обмена на IAM-токен и не протухает через двенадцать часов. Живёт
  * в окружении (`VEDAL_YANDEX_API_KEY`), в репозиторий не попадает.
  */
-public class YandexGptHttp implements YandexGpt {
+public class YandexGptHttp implements ChatModel {
 
     private static final Logger log = LoggerFactory.getLogger(YandexGptHttp.class);
 

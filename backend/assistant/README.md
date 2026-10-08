@@ -57,7 +57,17 @@
 | Значение | Кто отвечает |
 | --- | --- |
 | `search` (по умолчанию) | `DeterministicSearch` — перечень найденного со ссылками |
-| `yandexgpt` | `YandexGptEngine` — модель поверх того же поиска |
+| `model` (старое `yandexgpt`) | `ModelEngine` — модель поверх того же поиска |
+
+Чья модель — `vedal.assistant.provider` (`VEDAL_LLM_PROVIDER`): `yandex` —
+`YandexGptHttp` (по умолчанию), `gigachat` — `GigaChatHttp` (Сбер: OAuth-токен
+на 30 минут в `GigaChatAuth`, SSE-поток, корень Минцифры через
+`TrustedCertificates`), `cloudru` — `CloudRuHttp` (Cloud.ru Evolution
+Foundation Models: те же модели GigaChat за OpenAI-совместимой дверью,
+статический ключ, без OAuth и сертификата; тело запроса и разбор SSE общие
+с Сбером — `OpenAiChat`). Все три стоят за портом `ChatModel`, и `ModelEngine`
+не знает, с кем говорит. Порядок включения — `docs/operations/yandexgpt_activation.md`,
+`docs/operations/gigachat_activation.md` и `docs/operations/cloudru_models_activation.md`.
 
 **Модель не заменяет поиск, а надстраивается над ним.** Материалы находит
 портал: у него есть каталог, новости и документы с учётом прав, а у модели
@@ -77,9 +87,11 @@
 ведь нашлись; заставлять посетителя ждать человека из-за чужой недоступности
 незачем.
 
-**Ключа в репозитории нет.** `VEDAL_YANDEX_API_KEY` и
-`VEDAL_YANDEXGPT_MODEL_URI` (адрес модели целиком, `gpt://каталог/модель`)
-приходят окружением, и с `engine=yandexgpt` портал без них не поднимется —
+**Ключа в репозитории нет.** `VEDAL_YANDEXGPT_API_KEY` и
+`VEDAL_YANDEXGPT_MODEL_URI` (адрес модели целиком, `gpt://каталог/модель`) —
+или `GIGACHAT_AUTH_KEY` для Сбера, `CLOUDRU_API_KEY` для Cloud.ru — приходят
+окружением, и с `engine=model`
+портал без ключа выбранного провайдера не поднимется —
 это намеренно: иначе он молча отвечал бы перечнем ссылок, и заметить подмену
 можно было бы только по тому, что ответы стали суше.
 
@@ -94,7 +106,7 @@
 | `VectorSearch` | по близости векторов в индексе pgvector |
 
 Смена реализации не трогает ни промпт, ни нумерацию источников, ни разговор:
-`YandexGptEngine` получает список выдержек и не спрашивает, откуда они.
+`ModelEngine` получает список выдержек и не спрашивает, откуда они.
 
 **Пустой индекс — рабочее состояние, а не заготовка.** Корпуса документов
 у VEDAL пока нет ([issue #38](https://github.com/michaelwelly/MuseonUrania/issues/38)),
@@ -117,8 +129,11 @@
 - схема `knowledge_source` / `knowledge_chunk` и расширение `vector`
   (миграция `V34`), образ базы — `pgvector/pgvector:pg16`;
 - нарезка материала на фрагменты с перекрытием (`Chunks`);
-- порт эмбеддингов `Embeddings` и его реализация `YandexEmbeddings` —
-  пара моделей `text-search-doc` и `text-search-query`, вектор из 256 чисел;
+- порт эмбеддингов `Embeddings` и его реализации `YandexEmbeddings`,
+  `GigaChatEmbeddings` и `CloudRuEmbeddings` (провайдер — `VEDAL_RAG_PROVIDER`;
+  размерности разные, и `KnowledgeStore` сверяет модель с колонкой на старте;
+  у Cloud.ru размерность узнаётся по первому ответу модели) —
+  у Яндекса пара моделей `text-search-doc` и `text-search-query`, вектор из 256 чисел;
 - индексация с отпечатком: неизменившийся материал не стоит ни одного вызова
   модели (`KnowledgeIndex`);
 - поиск по близости с порогом и областями `PUBLIC` / `STAFF` (`VectorSearch`);
@@ -149,7 +164,7 @@
 
 Включается настройкой `vedal.assistant.rag.enabled` вместе с парой адресов
 моделей эмбеддингов. Половинчатая настройка роняет старт с внятным
-сообщением — по той же причине, по которой его роняет `engine=yandexgpt`
+сообщением — по той же причине, по которой его роняет `engine=model`
 без ключа.
 
 Заготовки остаются быстрым путём для кнопок: на «Запросить КП» незачем
