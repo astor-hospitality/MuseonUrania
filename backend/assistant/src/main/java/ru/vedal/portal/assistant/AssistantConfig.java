@@ -106,6 +106,56 @@ public class AssistantConfig {
     }
 
     /**
+     * Настройки SaluteSpeech — тем же образом, что и Сбера для модели.
+     * Проверяются в {@link #textToSpeech}, то есть только при
+     * {@code VEDAL_TTS_PROVIDER=salute}. Корень Минцифры по умолчанию
+     * тот же файл, что у GigaChat: {@code SALUTE_CA_BUNDLE} наследует
+     * {@code GIGACHAT_CA_BUNDLE} в application.properties.
+     */
+    @Bean
+    SaluteSpeechSettings saluteSpeechSettings(
+            @Value("${vedal.assistant.salute.auth-key:}") String authKey,
+            @Value("${vedal.assistant.salute.scope:" + SaluteSpeechSettings.DEFAULT_SCOPE + "}") String scope,
+            @Value("${vedal.assistant.salute.tts-voice:" + SaluteSpeechSettings.DEFAULT_VOICE + "}") String voice,
+            @Value("${vedal.assistant.salute.tts-format:" + SaluteSpeechSettings.DEFAULT_FORMAT + "}") String format,
+            @Value("${vedal.assistant.salute.auth-url:" + GigaChatAuth.CLOUD_URL + "}") String authUrl,
+            @Value("${vedal.assistant.salute.api-url:" + SaluteSpeechSettings.CLOUD_API + "}") String apiUrl,
+            @Value("${vedal.assistant.salute.ca-bundle:${vedal.assistant.gigachat.ca-bundle:}}") String caBundle) {
+        return new SaluteSpeechSettings(authKey, scope, voice, format, authUrl, apiUrl, caBundle);
+    }
+
+    /**
+     * Чей голос озвучивает ответы: {@code yandex} (SpeechKit, как было)
+     * или {@code salute} (SaluteSpeech Сбера).
+     *
+     * <p>Настройка своя, не {@code VEDAL_LLM_PROVIDER}: модель и голос —
+     * разные договоры и разные ключи, и перевести ответы на GigaChat,
+     * оставив голос Яндекса, — нормальное состояние. Умолчание — Яндекс,
+     * чтобы стенд без переменной звучал тем же, чем звучал. Опечатка —
+     * отказ на старте, а не тихий откат.
+     *
+     * <p>Распознавание речи ({@code /voice/recognize}) этой настройкой
+     * не затрагивается и остаётся в {@link SpeechKit}.
+     */
+    @Bean
+    TextToSpeech textToSpeech(SpeechKit speechKit, SaluteSpeechSettings salute, ObjectMapper json,
+                              @Value("${vedal.assistant.tts.provider:" + YANDEX + "}") String provider,
+                              @Value("${vedal.assistant.model.timeout:PT25S}") Duration timeout) {
+        var name = provider == null ? "" : provider.strip().toLowerCase(java.util.Locale.ROOT);
+        return switch (name) {
+            case YANDEX -> new SpeechKitTextToSpeech(speechKit);
+            case SaluteSpeechSettings.PROVIDER -> {
+                log.info("Ведалина озвучивает ответы голосом SaluteSpeech {} ({})",
+                        salute.voice(), salute.format());
+                yield salute.textToSpeech(json, timeout);
+            }
+            default -> throw new IllegalStateException(
+                    "Неизвестный провайдер озвучивания «" + provider + "». VEDAL_TTS_PROVIDER "
+                            + "принимает yandex или salute.");
+        };
+    }
+
+    /**
      * Кто отвечает: модель или поиск по словам.
      *
      * <p><b>Почему выбор настройкой, а не наличием ключа.</b> «Есть ключ —

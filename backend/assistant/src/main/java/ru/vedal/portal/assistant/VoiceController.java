@@ -14,13 +14,16 @@ import static org.springframework.http.HttpStatus.*;
 @RequestMapping("/api/assistant/v1/voice")
 public class VoiceController {
     private final SpeechKit speech;
+    private final TextToSpeech voice;
     private final RateLimit limit = new RateLimit(20, Duration.ofMinutes(10));
     private final Semaphore slots = new Semaphore(3);
-    public VoiceController(SpeechKit speech) { this.speech = speech; }
+    /** Распознаёт SpeechKit; озвучивает тот, кого выбрал VEDAL_TTS_PROVIDER. */
+    public VoiceController(SpeechKit speech, TextToSpeech voice) { this.speech = speech; this.voice = voice; }
 
     @GetMapping
     public ResponseEntity<?> status() {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(Map.of("available", speech.available()));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(Map.of("available", speech.available() || voice.available()));
     }
 
     private void enter(HttpServletRequest request) {
@@ -52,7 +55,7 @@ public class VoiceController {
         enter(request);
         try {
             return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                    .contentType(MediaType.parseMediaType("audio/wav")).body(speech.synthesize(body.text()));
+                    .contentType(MediaType.parseMediaType("audio/wav")).body(voice.synthesize(body.text()));
         } finally { slots.release(); }
     }
 }
