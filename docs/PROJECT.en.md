@@ -867,7 +867,7 @@ migrations (the latest, V31, is the answer rating), 23 controllers, 13 catalog
 items in the seed, 5 categories. The coverage gate is 70% of instructions and
 45% of branches.
 Spring Boot 4.1.0 on Spring Framework 7, Java 25, Jackson 3,
-PostgreSQL 16, Testcontainers. The gateway runs Spring Boot 4.0.7 with Spring
+PostgreSQL 16, Testcontainers. The gateway runs Spring Boot 4.0.8 with Spring
 Cloud Gateway 5.0.2: that is the only supported pair, and the version skew is
 harmless precisely because it is a separate process.
 

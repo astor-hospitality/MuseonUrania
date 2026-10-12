@@ -58,7 +58,7 @@ the cookie session and the CSRF token. Sign-in goes to Keycloak directly, and
 
 ## Versions
 
-Spring Boot 4.0.7, not 4.1.0 as in the portal. Spring Cloud Gateway 5.0.x is
+Spring Boot 4.0.8, not 4.1.0 as in the portal. Spring Cloud Gateway 5.0.x is
 built against 4.0.x, and that is the only supported pair.
 
 The version skew is harmless precisely because this is a separate process: the

@@ -832,7 +832,7 @@ Flyway (последняя — V31, оценка ответа Ведалины),
 13 позиций каталога в сиде, 5 категорий. Планка покрытия — инструкции 70%,
 ветки 45%.
 Spring Boot 4.1.0 на Spring Framework 7, Java 25, Jackson 3, PostgreSQL 16,
-Testcontainers. Шлюз — Spring Boot 4.0.7 и Spring Cloud Gateway 5.0.2:
+Testcontainers. Шлюз — Spring Boot 4.0.8 и Spring Cloud Gateway 5.0.2:
 это единственная поддерживаемая пара, и расхождение версий безвредно ровно
 потому, что это отдельный процесс.
 
