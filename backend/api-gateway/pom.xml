@@ -9,11 +9,15 @@
 	     он разговаривает по HTTP, а не по classpath.
 
 	     Реактор с порталом не заводим по той же причине: разные версии Boot
-	     в одном реакторе означали бы одну версию на оба модуля. -->
+	     в одном реакторе означали бы одну версию на оба модуля.
+
+	     4.0.8, а не 4.0.7: он поднимает Spring Framework с 7.0.8 до 7.0.9,
+	     где закрыты CVE-2026-47890 и CVE-2026-47892 в spring-webflux —
+	     Trivy с ними роняет сборку образа шлюза. -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.7</version>
+		<version>4.0.8</version>
 		<relativePath/>
 	</parent>
 
@@ -26,9 +30,9 @@
 	<properties>
 		<java.version>25</java.version>
 		<spring-cloud.version>2025.1.2</spring-cloud.version>
-		<!-- Boot 4.0.7 управляет Netty 4.2.15.Final. Патч 4.2.17.Final
-		     закрывает CVE-2026-75595 и сохраняет линию 4.2.x. -->
-		<netty.version>4.2.17.Final</netty.version>
+		<!-- Netty отдельно не пиним: Boot 4.0.8 сам управляет 4.2.17.Final,
+		     где закрыт CVE-2026-75595. Прежняя ручная привязка к той же
+		     версии стала бы пустой. -->
 		<!-- BouncyCastle приходит транзитивно (nimbus-jose-jwt через oauth2-resource-server);
 		     1.81.1 несёт CVE-2026-8763 (CRITICAL), закрыто начиная с 1.85. Три артефакта
 		     держатся одной версией — смешивать линии bcprov/bcpkix/bcutil нельзя. -->
