@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 // Галерея и видео к новости (content/news-media.ts).
@@ -51,6 +52,18 @@ describe("медиа новости", () => {
     expect(newsMedia["aran-2026"].gallery).toHaveLength(1);
     expect(screen.getByAltText(map.alt)).toBeInTheDocument();
     expect(map.src).toBe("/photos/news/aran-2026/exhibition-map.jpg");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: `Увеличить изображение: ${map.alt}` }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: `Увеличенное изображение: ${map.alt}` }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Закрыть увеличенное изображение" }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("у новости без медиа нет ни галереи, ни плеера", async () => {

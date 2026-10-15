@@ -144,6 +144,83 @@
   object-fit: cover;
 }
 
+.galleryButton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.galleryButton:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: -3px;
+}
+
+.zoomHint {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 7px 10px;
+  border-radius: 3px;
+  background: rgb(5 49 38 / 88%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.galleryButton:hover .zoomHint,
+.galleryButton:focus-visible .zoomHint {
+  opacity: 1;
+}
+
+.lightbox {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgb(2 18 14 / 94%);
+}
+
+.lightboxImage {
+  position: relative;
+  z-index: 0;
+  width: min(94vw, 1400px);
+  height: min(90vh, 1000px);
+}
+
+.lightboxImage img {
+  object-fit: contain;
+}
+
+.lightboxClose {
+  position: fixed;
+  z-index: 1;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--deep-2);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lightboxClose:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+
 .videos {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -186,6 +263,19 @@
 
   .videos {
     grid-template-columns: 1fr;
+  }
+
+  .zoomHint {
+    opacity: 1;
+  }
+
+  .lightbox {
+    padding: 12px;
+  }
+
+  .lightboxImage {
+    width: 100%;
+    height: 88vh;
   }
 
   .crumbs {
