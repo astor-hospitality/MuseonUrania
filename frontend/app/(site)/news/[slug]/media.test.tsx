@@ -47,7 +47,8 @@ describe("медиа новости", () => {
     const { default: NewsEntryScreen } = await import("./screen");
     render(await NewsEntryScreen({ slug: "aran-2026" }));
 
-    const [, map] = newsMedia["aran-2026"].gallery;
+    const [map] = newsMedia["aran-2026"].gallery;
+    expect(newsMedia["aran-2026"].gallery).toHaveLength(1);
     expect(screen.getByAltText(map.alt)).toBeInTheDocument();
     expect(map.src).toBe("/photos/news/aran-2026/exhibition-map.jpg");
   });

@@ -28,10 +28,6 @@ export const newsMedia: Record<string, NewsMedia> = {
   "aran-2026": {
     gallery: [
       {
-        src: "/photos/news/aran-2026/cover.jpg",
-        alt: "Афиша конгресса 25–27 ноября 2026 года",
-      },
-      {
         src: "/photos/news/aran-2026/exhibition-map.jpg",
         alt: "Схема выставочной экспозиции: стенд VEDAL В3",
       },
