@@ -8,6 +8,7 @@ import { fetchNewsEntry } from "@/lib/api";
 import { mediaSrc } from "@/lib/media";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, articleStructuredData, breadcrumbStructuredData } from "@/lib/structured-data";
+import { NewsGallery } from "./NewsGallery";
 import styles from "./page.module.css";
 
 // §8.3 плана: согласованный формат новости — заголовок, краткий анонс, полный
@@ -144,19 +145,7 @@ export default async function NewsEntryScreen({ slug }: { slug: string }) {
             грузится по нажатию (preload="none"): два ролика по 8–10 МБ
             не должны скачиваться у каждого, кто открыл новость. */}
         {media && media.gallery.length > 0 && (
-          <ul className={styles.gallery}>
-            {media.gallery.map((shot) => (
-              <li key={shot.src} className={styles.galleryItem}>
-                <Image
-                  src={mediaSrc(shot.src)}
-                  alt={shot.alt}
-                  fill
-                  quality={90}
-                  sizes="(max-width: 700px) 50vw, 380px"
-                />
-              </li>
-            ))}
-          </ul>
+          <NewsGallery shots={media.gallery} />
         )}
         {media && media.videos.length > 0 && (
           <div className={styles.videos}>
