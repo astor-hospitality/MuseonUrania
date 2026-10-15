@@ -42,6 +42,17 @@ describe("медиа новости", () => {
     }
   });
 
+  it("у анонса конгресса показана схема стенда В3", async () => {
+    const { newsMedia } = await import("@/content/news-media");
+    const { default: NewsEntryScreen } = await import("./screen");
+    render(await NewsEntryScreen({ slug: "aran-2026" }));
+
+    const [map] = newsMedia["aran-2026"].gallery;
+    expect(newsMedia["aran-2026"].gallery).toHaveLength(1);
+    expect(screen.getByAltText(map.alt)).toBeInTheDocument();
+    expect(map.src).toBe("/photos/news/aran-2026/exhibition-map.jpg");
+  });
+
   it("у новости без медиа нет ни галереи, ни плеера", async () => {
     const { default: NewsEntryScreen } = await import("./screen");
     const { container } = render(await NewsEntryScreen({ slug: "drugaya-novost" }));
