@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { contentSecurityPolicy, securityHeaders } from "./security-headers";
+import { contentSecurityPolicy, metrikaReplayRoutes, securityHeaders } from "./security-headers";
 
 // Политику содержимого можно сломать молча в обе стороны, и обе одинаково
 // плохи. Слишком строгая — страница перестаёт грузить шрифт, картинку
@@ -75,6 +75,10 @@ describe("политика содержимого", () => {
     expect(csp).toContain("script-src 'self' 'unsafe-inline' https://mc.yandex.ru");
     expect(csp).toContain("img-src 'self' data: blob: https://mc.yandex.ru");
     expect(csp).toContain("connect-src 'self' https://mc.yandex.ru");
+    expect(csp).toContain("https://mc.webvisor.org");
+    expect(csp).toContain("wss://mc.webvisor.com");
+    expect(csp).toContain("child-src 'self' blob:");
+    expect(csp).toContain("frame-ancestors 'none'");
   });
 
   // Кадр карты разрешён всегда, а грузить его или нет — решает согласие
@@ -96,6 +100,19 @@ describe("политика содержимого", () => {
 });
 
 describe("набор заголовков", () => {
+  it("разрешает только Метрике встраивать явно публичные страницы при включённом счётчике", () => {
+    const env = { ...ПУСТО, NEXT_PUBLIC_YANDEX_METRIKA_ID: "112490942" };
+    expect(contentSecurityPolicy(env)).toContain("frame-ancestors 'none'");
+    expect(contentSecurityPolicy(ПУСТО, true)).toContain("frame-ancestors 'none'");
+    expect(contentSecurityPolicy(env, true)).toContain(
+      "frame-ancestors https://metrika.yandex.ru https://metrika.yandex.com",
+    );
+    expect(securityHeaders(env, true)).toContainEqual({ key: "X-Frame-Options", value: "DENY" });
+    expect(metrikaReplayRoutes).toEqual([
+      "/", "/about/:path*", "/production/:path*", "/products/:path*", "/service/:path*",
+      "/news/:path*", "/contacts/:path*", "/legal/privacy/:path*",
+    ]);
+  });
   it("отдаёт все четыре", () => {
     expect(securityHeaders(ПУСТО).map((h) => h.key)).toEqual([
       "Content-Security-Policy",

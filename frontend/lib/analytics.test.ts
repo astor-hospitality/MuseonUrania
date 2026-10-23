@@ -79,17 +79,14 @@ describe("Яндекс Метрика", () => {
       expect(ym?.a?.[0]?.[1]).toBe("init");
     });
 
-    it("вебвизор выключен", async () => {
+    it("вебвизор включён после согласия v2", async () => {
       process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID = "12345678";
       const { installMetrika } = await import("./analytics");
 
       installMetrika("12345678");
 
-      // Вебвизор записывает содержимое страницы, включая набранное в форме.
-      // Это уже не обезличенная статистика, а в плашке согласия обещана
-      // именно она.
       const init = (window as { ym?: { a?: unknown[][] } }).ym?.a?.[0];
-      expect((init?.[2] as { webvisor?: boolean }).webvisor).toBe(false);
+      expect((init?.[2] as { webvisor?: boolean }).webvisor).toBe(true);
     });
 
     it("повторный вызов не ставит второй счётчик", async () => {

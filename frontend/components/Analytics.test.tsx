@@ -48,7 +48,7 @@ async function смонтировать({ счётчик }: { счётчик: bo
   return userEvent.setup();
 }
 
-const разрешить = () => localStorage.setItem("vedal.analytics.v1", "granted");
+const разрешить = () => localStorage.setItem("vedal.analytics.v2", "granted");
 
 describe("счётчик не поднимается без права", () => {
   it("нет согласия — нет скрипта", async () => {

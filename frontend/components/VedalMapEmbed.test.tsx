@@ -80,7 +80,7 @@ describe("встроенная карта", () => {
     // отдельно». Разъедься это — второй вопрос пришлось бы задать, а его
     // в плашке нет.
     process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID = "12345678";
-    localStorage.setItem("vedal.analytics.v1", "granted");
+    localStorage.setItem("vedal.analytics.v2", "granted");
 
     await показать();
 

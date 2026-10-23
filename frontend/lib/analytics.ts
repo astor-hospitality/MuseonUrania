@@ -80,10 +80,9 @@ export function installMetrika(id: string): void {
     clickmap: true,
     trackLinks: true,
     accurateTrackBounce: true,
-    // Вебвизор выключен намеренно: он записывает движение мыши и содержимое
-    // страницы, включая то, что человек набрал в форме. Это уже не
-    // обезличенная статистика, и обещать её в плашке согласия мы не можем.
-    webvisor: false,
+    // Согласие v2 прямо включает запись действий. Формы и чат скрыты
+    // классом ym-hide-content; запись содержимого полей выключена в счётчике.
+    webvisor: true,
   });
 
   if (!document.querySelector(`script[src="${TAG_SRC}"]`)) {

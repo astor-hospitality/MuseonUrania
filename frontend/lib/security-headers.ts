@@ -49,7 +49,7 @@ function origin(raw: string | undefined): string | null {
 /** Адреса счётчика. Пусто, пока счётчик не включён. */
 function metrika(env: Env): string[] {
   return env.NEXT_PUBLIC_YANDEX_METRIKA_ID?.trim()
-    ? ["https://mc.yandex.ru", "https://mc.yandex.com"]
+    ? ["https://mc.yandex.ru", "https://mc.yandex.com", "https://mc.webvisor.org", "https://mc.webvisor.com", "https://yastatic.net"]
     : [];
 }
 
@@ -62,7 +62,7 @@ function metrika(env: Env): string[] {
  */
 const MAP = ["https://yandex.ru", "https://yandex.com"];
 
-export function contentSecurityPolicy(env: Env): string {
+export function contentSecurityPolicy(env: Env, replayPublicPage = false): string {
   const media = origin(env.NEXT_PUBLIC_MEDIA_URL);
   const api = origin(env.NEXT_PUBLIC_API_URL);
   const keycloak = origin(env.NEXT_PUBLIC_OIDC_ISSUER);
@@ -101,20 +101,32 @@ export function contentSecurityPolicy(env: Env): string {
     // молча не грузит <video> — плеер стоит, а нажатие ничего не делает.
     join("media-src 'self' blob:", media),
     "font-src 'self' data:",
-    join("connect-src 'self'", api, keycloak, ...counter),
-    join("frame-src 'self'", ...MAP, ...counter),
-    "frame-ancestors 'none'",
+    join("connect-src 'self'", api, keycloak, ...counter,
+      ...(counter.length ? ["wss://mc.yandex.ru", "wss://mc.yandex.com", "wss://mc.webvisor.org", "wss://mc.webvisor.com"] : [])),
+    join("frame-src 'self'", ...MAP, ...counter, counter.length ? "blob:" : null),
+    ...(counter.length ? [join("child-src 'self' blob:", ...counter)] : []),
+    replayPublicPage && counter.length
+      ? "frame-ancestors https://metrika.yandex.ru https://metrika.yandex.com"
+      : "frame-ancestors 'none'",
     "base-uri 'self'",
     // Вход уводит браузер на Keycloak формой — без этого он молча не уйдёт.
     join("form-action 'self'", keycloak),
   ].join("; ");
 }
 
-export function securityHeaders(env: Env): { key: string; value: string }[] {
+export function securityHeaders(env: Env, replayPublicPage = false): { key: string; value: string }[] {
   return [
-    { key: "Content-Security-Policy", value: contentSecurityPolicy(env) },
+    { key: "Content-Security-Policy", value: contentSecurityPolicy(env, replayPublicPage) },
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "X-Frame-Options", value: "DENY" },
     { key: "Referrer-Policy", value: "no-referrer" },
   ];
 }
+
+// An explicit public-page allowlist. Never allow framing of admin, APIs,
+// authentication pages or arbitrary future routes. X-Frame-Options stays DENY
+// as a legacy-browser fallback; modern browsers enforce CSP frame-ancestors.
+export const metrikaReplayRoutes = [
+  "/", "/about/:path*", "/production/:path*", "/products/:path*",
+  "/service/:path*", "/news/:path*", "/contacts/:path*", "/legal/privacy/:path*",
+];

@@ -89,7 +89,7 @@ export default function HomeLeadForm() {
   }
 
   return (
-    <form className={styles.card} onSubmit={onSubmit} noValidate>
+    <form className={`${styles.card} ym-hide-content`} onSubmit={onSubmit} noValidate>
       <div className={styles.row}>
         <div className={styles.field}>
           <input

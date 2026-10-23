@@ -101,7 +101,7 @@ describe("плашка со счётчиком", () => {
 
     await user.click(screen.getByRole("button", { name: "Принять" }));
 
-    expect(localStorage.getItem("vedal.analytics.v1")).toBe("granted");
+    expect(localStorage.getItem("vedal.analytics.v2")).toBe("granted");
     expect(screen.queryByRole("complementary", { name: "Использование cookie" })).toBeNull();
   });
 
@@ -110,7 +110,7 @@ describe("плашка со счётчиком", () => {
 
     await user.click(screen.getByRole("button", { name: "Только необходимые" }));
 
-    expect(localStorage.getItem("vedal.analytics.v1")).toBe("denied");
+    expect(localStorage.getItem("vedal.analytics.v2")).toBe("denied");
     expect(screen.queryByRole("complementary", { name: "Использование cookie" })).toBeNull();
   });
 
