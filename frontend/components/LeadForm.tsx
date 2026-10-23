@@ -346,7 +346,7 @@ export default function LeadForm({
   }
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form className={`${styles.form} ym-hide-content`} onSubmit={onSubmit} noValidate>
       {topics && (
         <div className={`${styles.field} ${styles.fieldWide} ${styles.fieldFirst}`}>
           <label className={styles.label} htmlFor="topic">

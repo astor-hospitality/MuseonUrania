@@ -75,6 +75,10 @@ describe("политика содержимого", () => {
     expect(csp).toContain("script-src 'self' 'unsafe-inline' https://mc.yandex.ru");
     expect(csp).toContain("img-src 'self' data: blob: https://mc.yandex.ru");
     expect(csp).toContain("connect-src 'self' https://mc.yandex.ru");
+    expect(csp).toContain("https://mc.webvisor.org");
+    expect(csp).toContain("wss://mc.webvisor.com");
+    expect(csp).toContain("child-src 'self' blob:");
+    expect(csp).toContain("frame-ancestors 'none'");
   });
 
   // Кадр карты разрешён всегда, а грузить его или нет — решает согласие

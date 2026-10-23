@@ -96,6 +96,17 @@ describe("согласие на сторонние ресурсы Яндекса
   });
 
   describe("площадка со счётчиком", () => {
+    it("не переносит старое согласие на запись действий", async () => {
+      localStorage.setItem("vedal.analytics.v1", "granted");
+      const { readConsent } = await isolated();
+      expect(readConsent()).toBe("unanswered");
+    });
+
+    it("сохраняет прежний отказ без повторного запроса", async () => {
+      localStorage.setItem("vedal.analytics.v1", "denied");
+      const { readConsent } = await isolated();
+      expect(readConsent()).toBe("necessary");
+    });
     it("до ответа не считается согласием", async () => {
       const { readConsent } = await isolated();
 

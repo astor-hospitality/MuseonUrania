@@ -49,7 +49,7 @@ function origin(raw: string | undefined): string | null {
 /** Адреса счётчика. Пусто, пока счётчик не включён. */
 function metrika(env: Env): string[] {
   return env.NEXT_PUBLIC_YANDEX_METRIKA_ID?.trim()
-    ? ["https://mc.yandex.ru", "https://mc.yandex.com"]
+    ? ["https://mc.yandex.ru", "https://mc.yandex.com", "https://mc.webvisor.org", "https://mc.webvisor.com", "https://yastatic.net"]
     : [];
 }
 
@@ -101,8 +101,10 @@ export function contentSecurityPolicy(env: Env): string {
     // молча не грузит <video> — плеер стоит, а нажатие ничего не делает.
     join("media-src 'self' blob:", media),
     "font-src 'self' data:",
-    join("connect-src 'self'", api, keycloak, ...counter),
-    join("frame-src 'self'", ...MAP, ...counter),
+    join("connect-src 'self'", api, keycloak, ...counter,
+      ...(counter.length ? ["wss://mc.yandex.ru", "wss://mc.yandex.com", "wss://mc.webvisor.org", "wss://mc.webvisor.com"] : [])),
+    join("frame-src 'self'", ...MAP, ...counter, counter.length ? "blob:" : null),
+    ...(counter.length ? [join("child-src 'self' blob:", ...counter)] : []),
     "frame-ancestors 'none'",
     "base-uri 'self'",
     // Вход уводит браузер на Keycloak формой — без этого он молча не уйдёт.

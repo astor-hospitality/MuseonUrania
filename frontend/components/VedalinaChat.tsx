@@ -754,7 +754,7 @@ export default function VedalinaChat({ onClose }: { onClose?: () => void }) {
   }, [shown, typing, answerDraft, staffTyping, waiting]);
 
   return (
-    <section className={styles.chat} aria-label={`Чат с ассистентом ${vedalina.name}`}>
+    <section className={`${styles.chat} ym-hide-content`} aria-label={`Чат с ассистентом ${vedalina.name}`}>
       <div className={styles.head}>
         {/* Та же фактура, что на тёмных полосах страниц: чат — часть сайта,
             а не вставленный чужой виджет. Без квадратов и на 9%. */}
