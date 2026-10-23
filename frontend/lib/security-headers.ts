@@ -62,7 +62,7 @@ function metrika(env: Env): string[] {
  */
 const MAP = ["https://yandex.ru", "https://yandex.com"];
 
-export function contentSecurityPolicy(env: Env): string {
+export function contentSecurityPolicy(env: Env, replayPublicPage = false): string {
   const media = origin(env.NEXT_PUBLIC_MEDIA_URL);
   const api = origin(env.NEXT_PUBLIC_API_URL);
   const keycloak = origin(env.NEXT_PUBLIC_OIDC_ISSUER);
@@ -105,18 +105,28 @@ export function contentSecurityPolicy(env: Env): string {
       ...(counter.length ? ["wss://mc.yandex.ru", "wss://mc.yandex.com", "wss://mc.webvisor.org", "wss://mc.webvisor.com"] : [])),
     join("frame-src 'self'", ...MAP, ...counter, counter.length ? "blob:" : null),
     ...(counter.length ? [join("child-src 'self' blob:", ...counter)] : []),
-    "frame-ancestors 'none'",
+    replayPublicPage && counter.length
+      ? "frame-ancestors https://metrika.yandex.ru https://metrika.yandex.com"
+      : "frame-ancestors 'none'",
     "base-uri 'self'",
     // Вход уводит браузер на Keycloak формой — без этого он молча не уйдёт.
     join("form-action 'self'", keycloak),
   ].join("; ");
 }
 
-export function securityHeaders(env: Env): { key: string; value: string }[] {
+export function securityHeaders(env: Env, replayPublicPage = false): { key: string; value: string }[] {
   return [
-    { key: "Content-Security-Policy", value: contentSecurityPolicy(env) },
+    { key: "Content-Security-Policy", value: contentSecurityPolicy(env, replayPublicPage) },
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "X-Frame-Options", value: "DENY" },
     { key: "Referrer-Policy", value: "no-referrer" },
   ];
 }
+
+// An explicit public-page allowlist. Never allow framing of admin, APIs,
+// authentication pages or arbitrary future routes. X-Frame-Options stays DENY
+// as a legacy-browser fallback; modern browsers enforce CSP frame-ancestors.
+export const metrikaReplayRoutes = [
+  "/", "/about/:path*", "/production/:path*", "/products/:path*",
+  "/service/:path*", "/news/:path*", "/contacts/:path*", "/legal/privacy/:path*",
+];

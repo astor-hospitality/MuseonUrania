@@ -16,6 +16,14 @@
 {$VEDAL_DOMAIN} {
 	encode zstd gzip
 
+	# Replay is permitted only for these public pages, never admin/API/auth.
+	map {path} {metrika_frame_ancestors} {
+		default "'none'"
+		/ "https://metrika.yandex.ru https://metrika.yandex.com"
+		~^/(about|production|products|service|news|contacts)(/.*)?$ "https://metrika.yandex.ru https://metrika.yandex.com"
+		~^/legal/privacy(/.*)?$ "https://metrika.yandex.ru https://metrika.yandex.com"
+	}
+
 	# Лимит тела. Согласован с vedal.storage.max-file-size портала (20 МБ
 	# на файл) и с фильтром RequestSize на шлюзе (21 МБ). Меньшее значение
 	# здесь уронит загрузку документа раньше приложения, и редактор увидит
@@ -143,7 +151,7 @@
 		# Та же строка живёт в frontend/lib/security-headers.ts, и разойтись
 		# им нельзя: политики складываются в пересечение, то есть в более
 		# строгую из двух.
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com https://yastatic.net; object-src 'none'; img-src 'self' data: blob: https://{$VEDAL_MEDIA_DOMAIN} {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' blob: https://{$VEDAL_MEDIA_DOMAIN}; connect-src 'self' https://{$VEDAL_KEYCLOAK_DOMAIN} {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com wss://mc.yandex.ru wss://mc.yandex.com wss://mc.webvisor.org wss://mc.webvisor.com; child-src 'self' blob: {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com; frame-src 'self' blob: https://yandex.ru https://yandex.com {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://{$VEDAL_KEYCLOAK_DOMAIN}"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com https://yastatic.net; object-src 'none'; img-src 'self' data: blob: https://{$VEDAL_MEDIA_DOMAIN} {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' blob: https://{$VEDAL_MEDIA_DOMAIN}; connect-src 'self' https://{$VEDAL_KEYCLOAK_DOMAIN} {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com wss://mc.yandex.ru wss://mc.yandex.com wss://mc.webvisor.org wss://mc.webvisor.com; child-src 'self' blob: {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com; frame-src 'self' blob: https://yandex.ru https://yandex.com {$VEDAL_ANALYTICS_ORIGINS:} https://mc.webvisor.org https://mc.webvisor.com; frame-ancestors {metrika_frame_ancestors}; base-uri 'self'; form-action 'self' https://{$VEDAL_KEYCLOAK_DOMAIN}"
 
 		# Заголовок сервера ничего не защищает, но и сообщать версию незачем.
 		-Server
