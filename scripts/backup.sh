@@ -80,22 +80,66 @@ if [ "$tables" -lt 20 ]; then
 fi
 echo "   восстановлено: таблиц $tables, заявок $leads"
 
+# ————— база Keycloak —————
+#
+# Учётки сотрудников, их пароли и второй фактор живут не в базе vedal,
+# а в отдельной базе keycloak того же кластера (compose.prod.yaml). Дамп
+# vedal их не содержит. При переезде на Cloud.ru их не перенесли, и
+# в realm'е осталось ноль сотрудников; копии, из которой их можно было бы
+# вернуть, тоже не нашлось.
+#
+# На стенде (start-dev) отдельной базы нет: Keycloak держит всё в файле H2
+# внутри тома vedal-keycloak. Тогда копировать здесь нечего, и скрипт
+# сообщает об этом, а не молчит.
+KC_DB_NAME="${VEDAL_KEYCLOAK_DB_NAME:-keycloak}"
+kc_dump=""
+if [ "$(docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d postgres -tAc \
+        "select 1 from pg_database where datname='$KC_DB_NAME'")" = "1" ]; then
+    kc_dump="$daily/keycloak-$now.dump"
+    echo "== снимаем дамп $KC_DB_NAME из $DB_CONTAINER"
+    docker exec "$DB_CONTAINER" pg_dump -U "$DB_USER" -d "$KC_DB_NAME" -Fc > "$kc_dump"
+
+    # Проверка без разворачивания: оглавление должно читаться и содержать
+    # данные таблицы пользователей. Схему Keycloak ведёт сам Keycloak, и её
+    # полный разбор здесь был бы проверкой чужого кода, а не нашей копии.
+    if ! docker exec -i "$DB_CONTAINER" pg_restore --list < "$kc_dump" \
+            | grep -q 'TABLE DATA public user_entity'; then
+        echo "ОШИБКА: в дампе $KC_DB_NAME нет данных user_entity — это не копия Keycloak"
+        rm -f "$kc_dump"
+        exit 1
+    fi
+
+    # Число сотрудников — то, по чему 3 ноября и заметили пропажу. Ноль
+    # не роняет прогон (свежая установка законно пуста), но в журнале
+    # должен бросаться в глаза.
+    staff=$(docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$KC_DB_NAME" -tAc \
+        "select count(*) from user_entity u join realm r on r.id = u.realm_id
+         where r.name = 'vedal' and u.service_account_client_link is null" 2>/dev/null || echo "?")
+    echo "   получилось $(( $(stat -c %s "$kc_dump") / 1024 )) КБ, сотрудников в realm vedal: $staff"
+    if [ "$staff" = "0" ]; then
+        echo "   ВНИМАНИЕ: в realm vedal нет ни одного сотрудника — войти в админку некому"
+    fi
+else
+    echo "== базы $KC_DB_NAME нет: Keycloak хранит учётки в томе vedal-keycloak (H2),"
+    echo "   этот скрипт их не копирует"
+fi
+
 # ————— ротация —————
 #
 # Копия понедельника переезжает в недельные. День недели, а не «каждый
 # седьмой файл»: так недельные копии ложатся на предсказуемые даты, и по
 # имени файла видно, за какое число копия.
 if [ "$(date +%u)" = "1" ]; then
-    cp "$dump" "$weekly/"
+    cp "$dump" ${kc_dump:+"$kc_dump"} "$weekly/"
     echo "== понедельник: копия отложена в недельные"
 fi
 
 trim() {
-    local dir="$1" keep="$2"
+    local dir="$1" keep="$2" prefix="$3"
     local count
-    count=$(find "$dir" -maxdepth 1 -name 'vedal-*.dump' | wc -l)
+    count=$(find "$dir" -maxdepth 1 -name "$prefix-*.dump" | wc -l)
     if [ "$count" -gt "$keep" ]; then
-        find "$dir" -maxdepth 1 -name 'vedal-*.dump' -printf '%T@ %p\n' \
+        find "$dir" -maxdepth 1 -name "$prefix-*.dump" -printf '%T@ %p\n' \
             | sort -n | head -n "$((count - keep))" | cut -d' ' -f2- \
             | while read -r old; do
                 echo "   удаляем старое: $(basename "$old")"
@@ -104,8 +148,10 @@ trim() {
     fi
 }
 
-trim "$daily" "$KEEP_DAILY"
-trim "$weekly" "$KEEP_WEEKLY"
+for prefix in vedal keycloak; do
+    trim "$daily" "$KEEP_DAILY" "$prefix"
+    trim "$weekly" "$KEEP_WEEKLY" "$prefix"
+done
 
 # ————— копия вне машины —————
 #
@@ -115,17 +161,20 @@ trim "$weekly" "$KEEP_WEEKLY"
 # локальные копии всё равно ценнее их отсутствия.
 if [ -n "${VEDAL_BACKUP_S3_BUCKET:-}" ] && [ -n "${VEDAL_S3_ACCESS_KEY:-}" ]; then
     echo "== выгружаем в ${VEDAL_BACKUP_S3_BUCKET}"
-    # aws-cli, а не mc: образы MinIO в 2025 исчезли из Docker Hub, а с quay.io тянутся не те теги.
-    docker run --rm \
-        -e AWS_ACCESS_KEY_ID="$VEDAL_S3_ACCESS_KEY" -e AWS_SECRET_ACCESS_KEY="${VEDAL_S3_SECRET_KEY:-}" \
-        -e AWS_DEFAULT_REGION="${VEDAL_S3_REGION:-ru-central1}" -e AWS_EC2_METADATA_DISABLED=true \
-        -v "$daily:/dumps:ro" \
-        amazon/aws-cli:2.22.35 --endpoint-url "${VEDAL_S3_ENDPOINT:-https://storage.yandexcloud.net}" \
-        s3 cp --quiet "/dumps/$(basename "$dump")" "s3://${VEDAL_BACKUP_S3_BUCKET}/db/$(basename "$dump")" \
-        && echo "   выгружено" || echo "   ВНИМАНИЕ: выгрузка не удалась, копия осталась только на машине"
+    for f in "$dump" ${kc_dump:+"$kc_dump"}; do
+        # aws-cli, а не mc: образы MinIO в 2025 исчезли из Docker Hub, а с quay.io тянутся не те теги.
+        docker run --rm \
+            -e AWS_ACCESS_KEY_ID="$VEDAL_S3_ACCESS_KEY" -e AWS_SECRET_ACCESS_KEY="${VEDAL_S3_SECRET_KEY:-}" \
+            -e AWS_DEFAULT_REGION="${VEDAL_S3_REGION:-ru-central1}" -e AWS_EC2_METADATA_DISABLED=true \
+            -v "$daily:/dumps:ro" \
+            amazon/aws-cli:2.22.35 --endpoint-url "${VEDAL_S3_ENDPOINT:-https://storage.yandexcloud.net}" \
+            s3 cp --quiet "/dumps/$(basename "$f")" "s3://${VEDAL_BACKUP_S3_BUCKET}/db/$(basename "$f")" \
+            && echo "   выгружено: $(basename "$f")" \
+            || echo "   ВНИМАНИЕ: $(basename "$f") не выгружен, копия осталась только на машине"
+    done
 else
     echo "== выгрузка вне машины не настроена (VEDAL_BACKUP_S3_BUCKET, ключ с правом записи)"
     echo "   копии лежат только на этой машине: потеря ВМ — потеря копий"
 fi
 
-echo "== готово: $dump"
+echo "== готово: $dump${kc_dump:+ и $kc_dump}"

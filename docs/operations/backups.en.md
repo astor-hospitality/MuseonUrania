@@ -8,6 +8,14 @@ The database only. Leads, clients, deals, quotes, conversations and the audit
 log exist in exactly one place — PostgreSQL. Document files live in object
 storage with its own redundancy; images and settings are rebuilt from git.
 
+The second database is `keycloak`, when it exists in the same cluster (as in
+`compose.prod.yaml`). It holds staff accounts, passwords and second factors,
+and the `vedal` dump does not contain them. On 3 November 2026, after the move
+to Cloud.ru, the `vedal` realm turned out to have zero staff, and there was
+nothing to restore them from. On the stand (`start-dev`) there is no separate
+database: accounts live in an H2 file inside the `vedal-keycloak` volume, and
+the script logs that it does not copy them.
+
 ## How it works
 
 `scripts/backup.sh`, run by `vedal-backup.timer` every night at three o'clock
@@ -20,11 +28,16 @@ One run does four things:
    the live one and counts tables and leads. A copy nobody has ever restored is
    a hope, not a backup: a corrupted dump looks like a file of the right size
    right up to the day it is needed.
-3. On Mondays, sets a copy aside in `weekly/`.
-4. Trims the old ones: seven daily, four weekly.
+3. If a `keycloak` database exists, dumps it too into `keycloak-<time>.dump`.
+   It checks the dump's table of contents (it must contain `user_entity` data)
+   and logs how many staff the `vedal` realm has. Zero staff does not fail the
+   run, but prints a prominent warning.
+4. On Mondays, sets the copies aside in `weekly/`.
+5. Trims the old ones: seven daily, four weekly, separately for each database.
 
-The run fails with a non-zero code if the dump is under ten kilobytes or the
-restored database has fewer than twenty tables. A backup that fails silently is
+The run fails with a non-zero code if the dump is under ten kilobytes, the
+restored database has fewer than twenty tables, or the `keycloak` dump has no
+user table. A backup that fails silently is
 worse than no backup: people rely on it.
 
 ## What is still missing
@@ -83,3 +96,4 @@ before the replacement — however broken it looks.
 | `VEDAL_BACKUP_KEEP_WEEKLY` | `4` | how many weekly copies to keep |
 | `VEDAL_BACKUP_S3_BUCKET` | empty | bucket for off-machine copies |
 | `VEDAL_DB_CONTAINER` | `vedal-db` | name of the database container |
+| `VEDAL_KEYCLOAK_DB_NAME` | `keycloak` | Keycloak database name; if it is absent, only `vedal` is copied |
