@@ -13,7 +13,7 @@
   "resetPasswordAllowed": true,
   "rememberMe": false,
   "verifyEmail": false,
-  "loginWithEmailAllowed": false,
+  "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "accessTokenLifespan": 900,
   "ssoSessionIdleTimeout": 3600,
