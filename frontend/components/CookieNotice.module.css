@@ -2,6 +2,7 @@
    чата, и полоса во всю ширину накрыла бы её на телефоне. */
 
 .notice {
+  box-sizing: border-box;
   position: fixed;
   left: 20px;
   bottom: 20px;
@@ -36,6 +37,7 @@
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .accept {
@@ -93,18 +95,18 @@
    Это честнее по порядку: сначала вопрос про данные, потом разговор. */
 @media (max-width: 640px) {
   .notice {
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 10px;
+    right: auto;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
     margin-bottom: 0;
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    max-width: none;
+    max-width: min(340px, calc(100vw - 20px));
     /* Снизу добавляется вырез — на телефонах с полосой жеста кнопки иначе
        упираются в неё. */
-    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
-    border-radius: 14px 14px 0 0;
+    padding: 12px 14px;
+    border-radius: 10px;
     box-shadow: 0 -8px 28px rgba(8, 33, 29, 0.3);
   }
 
@@ -120,12 +122,7 @@
      а плашка и так стоит поверх содержимого. Колонки автоматические,
      а не «1fr 1fr»: кнопка бывает и одна — там, где счётчика нет,
      и половина ширины ей досталась бы без всякой причины. */
-  .buttons {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
-    gap: 10px;
-  }
+  .buttons { gap: 8px; }
 
   /* Кнопки крупнее, чем на мониторе: по ним попадают пальцем, а не курсором.
      Сорок пикселей — обычная нижняя граница для касания. */

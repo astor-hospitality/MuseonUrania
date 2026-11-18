@@ -40,6 +40,33 @@ export const asksThirdParty = metrikaId !== null || mapEmbedded;
  * он НЕ считается, см. {@link readConsent}.
  */
 const NOTICE_KEY = "vedal.cookies.v1";
+export const GOOGLE_CONSENT_KEY = "vedal.google.analytics.v1";
+
+export function readGoogleConsent(): string {
+  try {
+    const value = localStorage.getItem(GOOGLE_CONSENT_KEY);
+    return value === "yes" || value === "no" ? value : "unanswered";
+  }
+  catch { return "unknown"; }
+}
+
+export const readServerGoogleConsent = () => "unknown";
+
+/** Record a deliberate choice for both services; never infer Google consent. */
+export function answerCombined(allow: boolean): boolean {
+  try {
+    localStorage.setItem(GOOGLE_CONSENT_KEY, allow ? "yes" : "no");
+    localStorage.setItem(ANALYTICS_KEY, allow ? "granted" : "denied");
+    localStorage.setItem(NOTICE_KEY, new Date().toISOString());
+  } catch {
+    // Fail closed if storage cannot persist the complete choice.
+    try { localStorage.setItem(GOOGLE_CONSENT_KEY, "no"); localStorage.setItem(ANALYTICS_KEY, "denied"); } catch { /* unavailable */ }
+    listeners.forEach((notify) => notify());
+    return false;
+  }
+  listeners.forEach((notify) => notify());
+  return true;
+}
 
 /**
  * Ответ на вопрос про сторонние ресурсы Яндекса: `granted` или `denied`.
