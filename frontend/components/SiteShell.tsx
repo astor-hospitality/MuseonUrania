@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import VedalinaWidget from "@/components/VedalinaWidget";
 import CookieNotice from "@/components/CookieNotice";
 import Analytics from "@/components/Analytics";
+import GoogleConsent from "@/components/GoogleConsent";
 import ImageGuard from "@/components/ImageGuard";
 import LogoPreloader from "@/components/LogoPreloader";
 import Motion from "@/components/Motion";
@@ -50,6 +51,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         <CookieNotice />
         {/* Счётчик Метрики: молчит, пока не задан номер и не дано согласие. */}
         <Analytics />
+        <GoogleConsent />
         <ImageGuard />
       </body>
     </html>

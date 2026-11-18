@@ -95,7 +95,8 @@ describe("политика содержимого", () => {
   it("переживает кривой адрес в окружении", () => {
     const csp = contentSecurityPolicy({ ...ПУСТО, NEXT_PUBLIC_MEDIA_URL: "не адрес" });
 
-    expect(csp).toContain("img-src 'self' data: blob:;");
+    expect(csp).toContain("img-src 'self' data: blob: https://www.google-analytics.com;");
+    expect(csp).toContain("https://www.googletagmanager.com");
   });
 });
 
