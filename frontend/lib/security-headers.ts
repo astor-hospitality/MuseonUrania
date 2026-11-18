@@ -76,7 +76,7 @@ export function contentSecurityPolicy(env: Env, replayPublicPage = false): strin
     // скриптом с данными страницы. Убрать его можно только одноразовым
     // ключом на каждый ответ, а ключ требует серверного шага перед каждой
     // страницей — то есть отменяет свойство «падение бэкенда не роняет сайт».
-    join("script-src 'self' 'unsafe-inline'", ...counter),
+    join("script-src 'self' 'unsafe-inline'", ...counter, "https://www.googletagmanager.com"),
     "object-src 'none'",
     // blob: — портреты сотрудников в админке, и без него их не видно нигде.
     //
@@ -94,14 +94,14 @@ export function contentSecurityPolicy(env: Env, replayPublicPage = false): strin
     //
     // Послабления здесь нет: blob: — адрес, заведённый этой же вкладкой
     // из байтов, которые она уже получила. Чужого через него не приедет.
-    join("img-src 'self' data: blob:", media, ...counter),
+    join("img-src 'self' data: blob:", media, ...counter, "https://www.google-analytics.com"),
     "style-src 'self' 'unsafe-inline'",
     // Хранилище медиа — ради видео в новостях: ролики лежат в бакете рядом
     // с фотографиями и отдаются оттуда же. Без источника в media-src браузер
     // молча не грузит <video> — плеер стоит, а нажатие ничего не делает.
     join("media-src 'self' blob:", media),
     "font-src 'self' data:",
-    join("connect-src 'self'", api, keycloak, ...counter,
+    join("connect-src 'self'", api, keycloak, ...counter, "https://www.google-analytics.com", "https://region1.google-analytics.com", "https://analytics.google.com",
       ...(counter.length ? ["wss://mc.yandex.ru", "wss://mc.yandex.com", "wss://mc.webvisor.org", "wss://mc.webvisor.com"] : [])),
     join("frame-src 'self'", ...MAP, ...counter, counter.length ? "blob:" : null),
     ...(counter.length ? [join("child-src 'self' blob:", ...counter)] : []),
