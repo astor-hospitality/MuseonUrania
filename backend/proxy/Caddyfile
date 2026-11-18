@@ -14,6 +14,26 @@
 # ————— сайт, API и админка —————
 
 {$VEDAL_DOMAIN} {
+	# Preserve the production search crawler policy and Yandex verification.
+	handle /robots.txt {
+		header Content-Type "text/plain; charset=UTF-8"
+		respond `User-Agent: *
+User-Agent: YandexAdditional
+User-Agent: YandexAdditionalBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Host: https://vedal-med.ru
+Sitemap: https://vedal-med.ru/sitemap.xml
+` 200
+	}
+
+	handle /yandex_fcf6c3b9ec759b53.html {
+		header Content-Type "text/html; charset=UTF-8"
+		respond `<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>Verification: fcf6c3b9ec759b53</body></html>` 200
+	}
+
 	encode zstd gzip
 
 	# Replay is permitted only for these public pages, never admin/API/auth.
