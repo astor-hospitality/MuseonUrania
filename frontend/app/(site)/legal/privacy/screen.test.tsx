@@ -140,7 +140,7 @@ describe("политика про передачу данных в Яндекс"
     const cookie = разделПро(политика, "cookie");
 
     expect(cookie).toMatch(/Счётчик Яндекс Метрики на публичных страницах не подключён/);
-    expect(cookie).toMatch(/Google Analytics подключается только после отдельного согласия/);
+    expect(cookie).toMatch(/Google Analytics подключается только после согласия/);
   });
 
   it("без карты не рассказывает про карту", async () => {

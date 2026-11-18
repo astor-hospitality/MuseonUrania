@@ -173,4 +173,28 @@ describe("согласие на сторонние ресурсы Яндекса
     // оповещения нажатие «Принять» не убрало бы плашку и не подняло счётчик.
     expect(notify).toHaveBeenCalled();
   });
+
+  it("единое согласие записывает оба решения", async () => {
+    const { answerCombined, readConsent, readGoogleConsent } = await isolated();
+    expect(answerCombined(true)).toBe(true);
+    expect(readConsent()).toBe("analytics");
+    expect(readGoogleConsent()).toBe("yes");
+  });
+
+  it("отзыв отключает оба счётчика", async () => {
+    const { answerCombined, readConsent, readGoogleConsent } = await isolated();
+    answerCombined(true);
+    expect(answerCombined(false)).toBe(true);
+    expect(readConsent()).toBe("necessary");
+    expect(readGoogleConsent()).toBe("no");
+  });
+
+  it("ошибка записи не превращается в согласие", async () => {
+    const { answerCombined } = await isolated();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("unavailable"); });
+    expect(answerCombined(true)).toBe(false);
+    vi.restoreAllMocks();
+    expect(localStorage.getItem("vedal.google.analytics.v1")).toBeNull();
+    expect(localStorage.getItem("vedal.analytics.v2")).toBeNull();
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { installMetrika, metrikaId, reachGoal, trackPageView } from "@/lib/analytics";
 import { readConsent, readServerConsent, subscribe } from "@/lib/consent";
@@ -29,6 +29,11 @@ import { readConsent, readServerConsent, subscribe } from "@/lib/consent";
 export default function Analytics() {
   const consent = useSyncExternalStore(subscribe, readConsent, readServerConsent);
   const allowed = metrikaId !== null && consent === "analytics";
+  const previouslyAllowed = useRef(allowed);
+  useEffect(() => {
+    if (previouslyAllowed.current && !allowed && consent === "necessary") window.location.reload();
+    previouslyAllowed.current = allowed;
+  }, [allowed, consent]);
 
   // Только путь. `useSearchParams` брать нельзя: он переводит всю страницу
   // на отрисовку в браузере, а каталог, новости и документы у нас уезжают

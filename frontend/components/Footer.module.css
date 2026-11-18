@@ -137,6 +137,17 @@
   color: rgba(255, 255, 255, 0.82);
 }
 
+.cookieSettings {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .address {
   font-size: 13.5px;
   line-height: 1.5;

@@ -5,6 +5,7 @@ import { footer, site } from "@/content/site";
 import { ui as strings } from "@/content/ui";
 import { isPublicLinkVisible } from "@/lib/features";
 import FooterSubscribe from "./FooterSubscribe";
+import CookieSettingsLink from "./CookieSettingsLink";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -102,6 +103,7 @@ export default function Footer() {
         <Link className={styles.contactLine} href="/legal/privacy/">
           {strings.footer.privacy}
         </Link>
+        <CookieSettingsLink />
         {/* Дверь сотрудника. prefetch={false} обязателен: у сайта и админки
             разные корневые layout'ы, переход всё равно перезагружает страницу
             целиком, а предзагрузка тянула бы бандл админки каждому посетителю
