@@ -45,6 +45,8 @@ function start() {
   try { if (localStorage.getItem(KEY) !== "yes") return; } catch { return; }
   const w = window as AnalyticsWindow;
   w.dataLayer = w.dataLayer || [];
+  // Google tag bootstrap queues the native arguments object.
+  // eslint-disable-next-line prefer-rest-params
   w.gtag = w.gtag || function () { w.dataLayer?.push(arguments); };
   const allowed = new Set(["/", "/about", "/production", "/products", "/service", "/news", "/contacts"]);
   const normalized = location.pathname.replace(/\/$/, "") || "/";
