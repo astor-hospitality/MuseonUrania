@@ -16,19 +16,19 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/jest-dom": "^8.0.0",
     "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.7",
+    "@testing-library/user-event": "^14.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
-    "jsdom": "^30.0.1",
+    "jsdom": "^31.0.1",
     "typescript": "^5",
     "vite": "^8.2.1",
-    "vitest": "^5.0.0"
+    "vitest": "^5.1.1"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
