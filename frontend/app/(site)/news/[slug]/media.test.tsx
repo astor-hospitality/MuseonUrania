@@ -43,15 +43,18 @@ describe("медиа новости", () => {
     }
   });
 
-  it("у анонса конгресса показана схема стенда В3", async () => {
+  it("у новости выставки три визуализации и билет организатора", async () => {
     const { newsMedia } = await import("@/content/news-media");
     const { default: NewsEntryScreen } = await import("./screen");
     render(await NewsEntryScreen({ slug: "aran-2026" }));
 
     const [map] = newsMedia["aran-2026"].gallery;
-    expect(newsMedia["aran-2026"].gallery).toHaveLength(1);
+    expect(newsMedia["aran-2026"].gallery).toHaveLength(3);
     expect(screen.getByAltText(map.alt)).toBeInTheDocument();
-    expect(map.src).toBe("/photos/news/aran-2026/exhibition-map.jpg");
+    expect(map.src).toBe("/events/zdravo-2026/stand-front.jpg");
+    expect(screen.getByRole("heading", { name: "Как будет выглядеть наш стенд" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Получить бесплатный билет" })).toHaveAttribute("href", "https://www.zdravo-expo.ru/ru/visitors/ticket/");
+    expect(screen.getByText("Павильон 2 · Зал 7 · Стенд 7В070")).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", { name: `Увеличить изображение: ${map.alt}` }),

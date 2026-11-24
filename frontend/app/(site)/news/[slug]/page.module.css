@@ -298,3 +298,25 @@
     padding: 26px 18px 40px;
   }
 }
+
+/* Широкая афиша и горизонтальные визуализации выставочного стенда. */
+.eventArticle { max-width: 960px; }
+.eventArticle .photo img { object-fit: contain; }
+.eventInfo { margin-top: 32px; padding: 28px; border: 1px solid var(--line); border-left: 4px solid var(--green-dark); background: #fff; font-size: 16px; line-height: 1.65; }
+.eventInfo h2, .galleryTitle { font-size: 26px; line-height: 1.25; letter-spacing: -.02em; }
+.eventInfo p { margin-top: 12px; }
+.eventDates { font-weight: 600; }
+.eventStand { font-size: 20px; font-weight: 700; color: var(--green-dark); }
+.ticketLink { display: inline-flex; justify-content: center; margin-top: 20px; padding: 13px 20px; background: var(--green-dark); color: #fff; font-weight: 600; border-radius: 3px; }
+.ticketLink:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+.ticketNote { font-size: 14px; color: var(--muted); }
+.galleryTitle { margin-top: 40px; }
+.landscapeGallery { grid-template-columns: 1fr; margin-top: 20px; gap: 18px; }
+.landscapeGallery .galleryItem { aspect-ratio: 3 / 2; }
+.landscapeGallery .galleryItem img { object-fit: contain; }
+@media (max-width: 700px) {
+  .eventInfo { padding: 20px; }
+  .eventInfo h2, .galleryTitle { font-size: 23px; }
+  .eventStand { font-size: 18px; }
+  .ticketLink { width: 100%; padding: 13px 10px; text-align: center; }
+}

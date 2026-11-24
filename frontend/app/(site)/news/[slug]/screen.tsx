@@ -94,7 +94,7 @@ export default async function NewsEntryScreen({ slug }: { slug: string }) {
           на этой странице первый же экран и есть текст материала,
           и объяснить кириллицу надо раньше, чем она встретится. */}
 
-      <article className={styles.article}>
+      <article className={`${styles.article} ${media?.event ? styles.eventArticle : ""}`}>
         <header className={styles.head}>
           <div className={styles.meta}>
             <span className={styles.tag}>
@@ -141,11 +141,25 @@ export default async function NewsEntryScreen({ slug }: { slug: string }) {
           </p>
         )}
 
+        {media?.event && (
+          <section className={styles.eventInfo} aria-labelledby="event-visit-title">
+            <h2 id="event-visit-title">Где нас найти</h2>
+            <p className={styles.eventDates}>{media.event.dates}</p>
+            <p><strong>{media.event.venue}</strong><br />{media.event.address}</p>
+            <p className={styles.eventStand}>{media.event.stand}</p>
+            <a className={styles.ticketLink} href={media.event.ticketUrl} target="_blank" rel="noopener noreferrer">Получить бесплатный билет</a>
+            <p className={styles.ticketNote}>Электронный билет оформляется на сайте организатора.</p>
+          </section>
+        )}
+
         {/* Фото и видео сверх обложки — content/news-media.ts. Видео
             грузится по нажатию (preload="none"): два ролика по 8–10 МБ
             не должны скачиваться у каждого, кто открыл новость. */}
         {media && media.gallery.length > 0 && (
-          <NewsGallery shots={media.gallery} />
+          <section aria-label={media.galleryTitle ?? "Галерея новости"}>
+            {media.galleryTitle && <h2 className={styles.galleryTitle}>{media.galleryTitle}</h2>}
+            <NewsGallery shots={media.gallery} landscape={media.landscape} />
+          </section>
         )}
         {media && media.videos.length > 0 && (
           <div className={styles.videos}>
