@@ -14,6 +14,9 @@
 // на снимке, в переданных материалах не сказано.
 
 export type NewsMedia = {
+  galleryTitle?: string;
+  landscape?: boolean;
+  event?: { dates: string; venue: string; address: string; stand: string; ticketUrl: string };
   gallery: { src: string; alt: string }[];
   /**
    * poster — кадр из самого ролика. Обязателен: видео не грузится заранее
@@ -25,15 +28,23 @@ export type NewsMedia = {
 };
 
 export const newsMedia: Record<string, NewsMedia> = {
-  "aran-2026": {
+  "zdravookhranenie-2026": {
+    galleryTitle: "Как будет выглядеть наш стенд",
+    landscape: true,
+    event: {
+      dates: "7–10 декабря 2026 года",
+      venue: "МВЦ «Крокус Экспо»",
+      address: "Московская область, г. Красногорск, ул. Международная, д. 18",
+      stand: "Павильон 2 · Зал 7 · Стенд 7В070",
+      ticketUrl: "https://www.zdravo-expo.ru/ru/visitors/ticket/",
+    },
     gallery: [
-      {
-        src: "/photos/news/aran-2026/exhibition-map.jpg",
-        alt: "Схема выставочной экспозиции: стенд VEDAL В3",
-      },
+      { src: "/events/zdravo-2026/stand-front.jpg", alt: "Визуализация будущего стенда ВЕДАЛ: зона оборудования и стойка встречи гостей" },
+      { src: "/events/zdravo-2026/stand-lounge.jpg", alt: "Визуализация будущего стенда ВЕДАЛ: пространство для встреч и переговоров" },
+      { src: "/events/zdravo-2026/stand-side.jpg", alt: "Визуализация будущего стенда ВЕДАЛ: вид сбоку и оформление экспозиции" },
     ],
     videos: [],
-    credit: "Афиша и схема экспозиции предоставлены организатором конгресса.",
+    credit: "Визуализации будущего стенда предоставлены ВЕДАЛ. Итоговое оформление может отличаться.",
   },
   "innoprom-2026": {
     gallery: [

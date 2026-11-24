@@ -66,6 +66,13 @@ async function staticRedirects() {
 }
 
 describe("редиректы", () => {
+  it("сохраняет старую ссылку новости после исправления названия выставки", async () => {
+    expect(await staticRedirects()).toContainEqual({
+      source: "/news/aran-2026/",
+      destination: "/news/zdravookhranenie-2026/",
+      permanent: true,
+    });
+  });
   // Повод, с которого началась задача: в выдаче Google стоял `/contact`,
   // а маршрут на сайте — `/contacts/`. Переход из поиска давал 404.
   it("уводит /contact на /contacts/", async () => {

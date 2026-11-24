@@ -8,7 +8,7 @@ import styles from "./page.module.css";
 
 type GalleryShot = { src: string; alt: string };
 
-export function NewsGallery({ shots }: { shots: GalleryShot[] }) {
+export function NewsGallery({ shots, landscape = false }: { shots: GalleryShot[]; landscape?: boolean }) {
   const [selected, setSelected] = useState<GalleryShot | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -41,7 +41,7 @@ export function NewsGallery({ shots }: { shots: GalleryShot[] }) {
 
   return (
     <>
-      <ul className={styles.gallery}>
+      <ul className={`${styles.gallery} ${landscape ? styles.landscapeGallery : ""}`}>
         {shots.map((shot) => (
           <li key={shot.src} className={styles.galleryItem}>
             <button
@@ -58,7 +58,7 @@ export function NewsGallery({ shots }: { shots: GalleryShot[] }) {
                 alt={shot.alt}
                 fill
                 quality={90}
-                sizes="(max-width: 700px) 50vw, 380px"
+                sizes={landscape ? "(max-width: 700px) 100vw, 860px" : "(max-width: 700px) 50vw, 380px"}
               />
               <span className={styles.zoomHint}>Увеличить</span>
             </button>

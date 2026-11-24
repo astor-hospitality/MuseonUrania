@@ -190,6 +190,11 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      {
+        source: "/news/aran-2026/",
+        destination: "/news/zdravookhranenie-2026/",
+        permanent: true,
+      },
       // ————— один сайт — один адрес —————
       //
       // `www.vedal-med.ru` и `vedal-med.ru` — один и тот же server-блок
