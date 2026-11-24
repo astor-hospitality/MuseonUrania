@@ -46,10 +46,10 @@ describe("медиа новости", () => {
   it("у новости выставки три визуализации и билет организатора", async () => {
     const { newsMedia } = await import("@/content/news-media");
     const { default: NewsEntryScreen } = await import("./screen");
-    render(await NewsEntryScreen({ slug: "aran-2026" }));
+    render(await NewsEntryScreen({ slug: "zdravookhranenie-2026" }));
 
-    const [map] = newsMedia["aran-2026"].gallery;
-    expect(newsMedia["aran-2026"].gallery).toHaveLength(3);
+    const [map] = newsMedia["zdravookhranenie-2026"].gallery;
+    expect(newsMedia["zdravookhranenie-2026"].gallery).toHaveLength(3);
     expect(screen.getByAltText(map.alt)).toBeInTheDocument();
     expect(map.src).toBe("/events/zdravo-2026/stand-front.jpg");
     expect(screen.getByRole("heading", { name: "Как будет выглядеть наш стенд" })).toBeInTheDocument();

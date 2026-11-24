@@ -28,7 +28,7 @@ export type NewsMedia = {
 };
 
 export const newsMedia: Record<string, NewsMedia> = {
-  "aran-2026": {
+  "zdravookhranenie-2026": {
     galleryTitle: "Как будет выглядеть наш стенд",
     landscape: true,
     event: {
