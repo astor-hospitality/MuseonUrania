@@ -301,6 +301,7 @@
 
 /* Широкая афиша и горизонтальные визуализации выставочного стенда. */
 .eventArticle { max-width: 960px; }
+.eventArticle .title { overflow-wrap: anywhere; }
 .eventArticle .photo img { object-fit: contain; }
 .eventInfo { margin-top: 32px; padding: 28px; border: 1px solid var(--line); border-left: 4px solid var(--green-dark); background: #fff; font-size: 16px; line-height: 1.65; }
 .eventInfo h2, .galleryTitle { font-size: 26px; line-height: 1.25; letter-spacing: -.02em; }
